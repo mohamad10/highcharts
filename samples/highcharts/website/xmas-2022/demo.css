@@ -1,0 +1,166 @@
+@import "https://code.highcharts.com/css/highcharts.css";
+
+#container {
+    width: 500px;
+    height: 500px;
+    max-width: 500px;
+    max-height: 500px;
+    margin-left: 30%;
+}
+
+#container .highcharts-xaxis-grid .highcharts-grid-line {
+    stroke-width: 1px;
+    stroke: #135555;
+    opacity: 0.3;
+}
+
+#container .highcharts-axis-line {
+    fill: none;
+    stroke: #135555;
+}
+
+#container .highcharts-xaxis .highcharts-tick {
+    stroke-width: 2px;
+    stroke: #135555;
+}
+
+#container .highcharts-minor-grid-line {
+    stroke-dasharray: 2, 2;
+}
+
+#container .highcharts-background {
+    /* fill: rgb(89 227 215); */
+    fill: url(#silver2);
+}
+
+#container .trunk .highcharts-point {
+    stroke: #135555;
+    fill: #135555;
+}
+
+#container .data-label-container {
+    border-radius: 2px;
+    padding: 4px;
+    background-color: #e2dbd0;
+    width: 100px;
+    box-shadow: 2px 4px 8px rgb(0 0 0 / 10%);
+}
+
+#container .highcharts-tooltip-box {
+    fill: url(#a);
+    fill: url(#gold2);
+    stroke: #e2dbd0;
+    fill-opacity: 1;
+    box-shadow: 2px 4px 8px rgb(0 0 0 / 10%);
+}
+
+#container .tiptext {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+    fill: #2f2b38;
+    margin: 0;
+    display: block;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#container .highcharts-series-inactive {
+    opacity: 1;
+}
+
+#container .tipheader {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+    margin: 0;
+    fill: #2f2b38;
+    display: block;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+#container .branch .highcharts-graph {
+    stroke-width: 0 !important;
+    stroke: #2b908f;
+    transition: stroke-width 1s;
+}
+
+#container .branch .highcharts-graph {
+    opacity: 1;
+}
+
+#container .twig .highcharts-graph {
+    stroke-width: 0 !important;
+    stroke: #135555;
+    transition: stroke-width 1s;
+}
+
+#container .branch .highcharts-graph.show,
+#container .twig .highcharts-graph.show {
+    opacity: 1;
+    stroke-width: 10px !important;
+}
+
+#container .branch .highcharts-graph.die,
+#container .twig .highcharts-graph.die {
+    opacity: 1;
+    stroke-width: 1px !important;
+}
+
+#container .highcharts-tracker-line,
+#container .highcharts-graph {
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+}
+
+#container .highcharts-markers.branch,
+#container .highcharts-markers.twig {
+    opacity: 0;
+}
+
+#container .highcharts-markers.branch.show,
+#container .highcharts-markers.twig.show {
+    opacity: 1;
+    stroke: url(#gold2);
+    stroke-width: 3px;
+}
+
+#container .highcharts-markers.twig .highcharts-point.highcharts-point-hover {
+    stroke-width: 3px;
+    stroke: url(#gold2);
+}
+
+#container .highcharts-markers.twig .highcharts-point.highcharts-point-hover,
+#container .highcharts-markers.twig .highcharts-point {
+    stroke: url(#gold2);
+}
+
+#container .spiral .highcharts-point {
+    fill: transparent;
+    stroke: white;
+    opacity: 0.2;
+}
+
+#container .highcharts-color-1 {
+    fill: #c952b4;
+    stroke: #c952b4;
+}
+
+#container .highcharts-label text {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#container .highcharts-title {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+#container .highcharts-subtitle {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial, sans-serif;
+    font-weight: normal;
+    font-size: 18px;
+    fill: #2f2b38;
+}
+
+#container .highcharts-header {
+    display: none;
+}

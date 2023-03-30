@@ -36,7 +36,7 @@ import SyncHandler from './Handler.js';
 namespace Sync {
     export type EventType =
         'visibility' |
-        'selection' |
+        'extremes' |
         'highlight';
 
     export type EmitterConfig = [

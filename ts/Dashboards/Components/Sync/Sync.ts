@@ -37,8 +37,7 @@ namespace Sync {
     export type EventType =
         'visibility' |
         'selection' |
-        'highlight' |
-        'panning';
+        'highlight';
 
     export type EmitterConfig = [
         SyncEmitter['id'],

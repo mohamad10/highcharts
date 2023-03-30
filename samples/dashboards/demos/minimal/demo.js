@@ -46,7 +46,7 @@ Dashboards.board('container', {
             sync: {
                 visibility: true,
                 highlight: true,
-                selection: true
+                extremes: true
             },
             cell: 'dashboard-col-0',
             type: 'Highcharts',
@@ -65,7 +65,7 @@ Dashboards.board('container', {
             sync: {
                 visibility: true,
                 highlight: true,
-                selection: true
+                extremes: true
             },
             type: 'Highcharts',
             columnKeyMap: {
@@ -87,7 +87,7 @@ Dashboards.board('container', {
             sync: {
                 visibility: true,
                 highlight: true,
-                selection: true
+                extremes: true
             },
             type: 'Highcharts',
             columnKeyMap: {

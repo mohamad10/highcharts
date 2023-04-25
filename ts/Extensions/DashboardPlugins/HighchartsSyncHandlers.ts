@@ -192,7 +192,7 @@ const configs: {
                                     axis.update({
                                         events: {
                                             afterSetExtremes: (e): void => {
-                                                if (!(e as any).resetSelection) {
+                                                if ((!e.trigger || (e.trigger && e.trigger !== 'custom-reset')) && !(e as any).resetSelection) {
                                                     const axis = e.target as unknown as Axis;
 
                                                     // Prefer a series that's in a related table,
@@ -250,24 +250,18 @@ const configs: {
                                 callbacks.push(
                                     addEvent(chart, 'selection', function (e): void {
                                         if ('resetSelection' in e && e.resetSelection) {
-                                            cursor.emitCursor(store.table, {
-                                                type: 'position',
-                                                state: 'chart.resetSelection'
-                                            },
-                                            e as any
-                                            );
-                                        }
-                                    })
-                                );
+                                            e.preventDefault();
 
-                                callbacks.push(
-                                    addEvent(chart, 'afterShowResetZoom', function (e): void {
-                                        cursor.emitCursor(store.table, {
-                                            type: 'position',
-                                            state: 'chart.showResetZoom'
-                                        },
-                                        e as any
-                                        );
+                                            chart.axes.forEach((axis): void => {
+                                                axis.setExtremes(void 0, void 0, false, false, {
+                                                    trigger: 'custom-reset'
+                                                });
+
+                                                axis.displayBtn = false;
+                                            });
+
+                                            chart.redraw();
+                                        }
                                     })
                                 );
                             }
@@ -399,7 +393,7 @@ const configs: {
                                             if (eventTarget.min !== null && eventTarget.max !== null) {
                                                 if (
                                                     axis.max !== eventTarget.max &&
-                                                        axis.min !== eventTarget.min
+                                                    axis.min !== eventTarget.min
                                                 ) {
                                                     axis
                                                         .setExtremes(
@@ -408,7 +402,7 @@ const configs: {
                                                             true,
                                                             false,
                                                             {
-                                                                trigger: 'dashboards-sync'
+                                                                trigger: 'dashboards-sync-' + this.id
                                                             }
                                                         );
 
@@ -430,40 +424,6 @@ const configs: {
                                 cursor.removeListener(store.table.id, `${dimension}.extremes.max`, handleUpdateExtremes);
                             }
                         );
-                    });
-
-                    const handleChartResetSelection = (e: DataCursor.Event): void => {
-                        const { cursor, event } = e;
-                        const eventTarget = event && event.target as unknown as Chart;
-
-                        if (
-                            cursor.type === 'position' &&
-                            eventTarget &&
-                            eventTarget !== chart
-                        ) {
-                            chart.zoomOut();
-                        }
-                    };
-
-                    cursor.addListener(store.table.id, 'chart.resetSelection', handleChartResetSelection);
-
-                    const handleChartShowZoom = (e: DataCursor.Event): void => {
-                        const { cursor, event } = e;
-                        const eventTarget = event && event.target as unknown as Chart;
-                        if (
-                            cursor.type === 'position' &&
-                            eventTarget &&
-                            eventTarget !== chart
-                        ) {
-                            chart.showResetZoom();
-                        }
-                    };
-
-                    cursor.addListener(store.table.id, 'chart.showResetZoom', handleChartShowZoom);
-
-                    callbacks.push((): void => {
-                        cursor.removeListener(store.table.id, 'chart.resetSelection', handleChartResetSelection);
-                        cursor.addListener(store.table.id, 'chart.showResetZoom', handleChartShowZoom);
                     });
 
                     return (): void => {

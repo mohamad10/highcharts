@@ -260,6 +260,10 @@ const configs: {
                                                 axis.displayBtn = false;
                                             });
 
+                                            if (chart.resetZoomButton) {
+                                                chart.resetZoomButton = chart.resetZoomButton.destroy();
+                                            }
+
                                             chart.redraw();
                                         }
                                     })
@@ -402,9 +406,11 @@ const configs: {
                                                             true,
                                                             false,
                                                             {
-                                                                trigger: 'dashboards-sync-' + this.id
+                                                                trigger: 'dashboards-sync'
                                                             }
                                                         );
+
+                                                    chart.showResetZoom();
 
                                                 }
                                             }

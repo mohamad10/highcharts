@@ -37,67 +37,8 @@ fetch(
     'https://code.highcharts.com/mapdata/custom/world.topo.json'
 ).then(
     response => response.json()
-).then(async world => {
+).then(async world => (
     Dashboards.board('container', {
-        dataPool: {
-            connectors: [{
-                name: 'Active City',
-                type: 'CSV',
-                options: {
-                    dataTable: {
-                        aliases: {
-                            'avg. ˚C': 'TNC',
-                            'avg. ˚F': 'TNF',
-                            'avg. ˚K': 'TN',
-                            'max ˚C': 'TXC',
-                            'max ˚F': 'TXF',
-                            'max ˚K': 'TX',
-                            'Frost': 'FD',
-                            'Ice': 'ID',
-                            'Rain': 'RR1'
-                        },
-                        modifier: {
-                            type: 'Chain',
-                            chain: [{
-                                type: 'Range',
-                                ranges: [{
-                                    column: 'time',
-                                    minValue: minRange,
-                                    maxValue: maxRange
-                                }]
-                            }, {
-                                type: 'Math',
-                                columnFormulas: [{
-                                    column: 'TNC',
-                                    formula: '= E1 - 273.15'
-                                }, {
-                                    column: 'TNF',
-                                    formula: '= E1 * 1.8 - 459.67'
-                                }, {
-                                    column: 'TXC',
-                                    formula: '= F1 - 273.15'
-                                }, {
-                                    column: 'TXF',
-                                    formula: '= F1 * 1.8 - 459.67'
-                                }]
-                            }]
-                        }
-                    }
-                }
-            }, {
-                name: 'cities',
-                type: 'CSV',
-                options: {
-                    csvURL: 'https://www.highcharts.com/samples/data/climate-cities.csv'
-                }
-            }, {
-                name: 'New York',
-                type: 'CSV',
-                options: {
-                    csvURL: 'https://assets.highcharts.com/dashboard-demodata/climate/cities/40.71_-74.01.csv'
-                }
-            }]
-        },
         components: [{
             cell: 'time-range-selector',
             type: 'Highcharts',
@@ -122,7 +63,25 @@ fetch(
                 series: [{
                     // type: 'spline',
                     name: 'Timeline',
-                    data: buildDates(),
+                    data: (dates => {
+                        const dateEnd = new Date(Date.UTC(2010, 11, 25));
+                        let date = new Date(Date.UTC(1951, 0, 5));
+                        while (date <= dateEnd) {
+                            dates.push([date.getTime(), 0]);
+                            date = date.getUTCDate() >= 25 ?
+                                new Date(Date.UTC(
+                                    date.getFullYear(),
+                                    date.getUTCMonth() + 1,
+                                    5
+                                )) :
+                                new Date(Date.UTC(
+                                    date.getFullYear(),
+                                    date.getUTCMonth(),
+                                    date.getUTCDate() + 10
+                                ));
+                        }
+                        return dates;
+                    })([]),
                     showInNavigator: false,
                     marker: {
                         enabled: false
@@ -291,7 +250,6 @@ fetch(
         }, {
             cell: 'city-chart',
             type: 'Highcharts',
-            connector: 'Active City',
             sync: {
                 highlight: true
             },
@@ -368,7 +326,6 @@ fetch(
         }, {
             cell: 'selection-grid',
             type: 'DataGrid',
-            connector: 'Active City',
             sync: {
                 highlight: true
             },
@@ -380,13 +337,13 @@ fetch(
                         show: false
                     },
                     FD: {
-                        headerFormat: 'Days with Frost'
+                        headerFormat: 'Frost'
                     },
                     ID: {
-                        headerFormat: 'Days with Ice'
+                        headerFormat: 'Ice'
                     },
                     RR1: {
-                        headerFormat: 'Days with Rain'
+                        headerFormat: 'Rain'
                     },
                     TN: {
                         show: false
@@ -395,16 +352,16 @@ fetch(
                         show: false
                     },
                     TNC: {
-                        headerFormat: 'Average Temperature °C'
+                        headerFormat: 'avg. ˚C'
                     },
                     TNF: {
-                        headerFormat: 'Average Temperature °F'
+                        show: false // headerFormat: 'avg. °F'
                     },
                     TXC: {
-                        headerFormat: 'Maximal Temperature °C'
+                        headerFormat: 'max °C'
                     },
                     TXF: {
-                        headerFormat: 'Maximal Temperature °F'
+                        show: false // headerFormat: 'max °F'
                     }
                 }
             },
@@ -415,10 +372,64 @@ fetch(
             title: cityScope,
             value: 10,
             valueFormat: '{value:.0f}m'
-        }, {
-            cell: 'kpi-temperature',
+        }, ...['TN', 'TX', 'RR', 'ID', 'FD'].map(dataScope => ({
+            cell: `kpi-${dataScope}`,
             type: 'KPI',
-            chartOptions: buildKPIChartOptions('TN' + temperatureScale),
+            chartOptions: {
+                chart: {
+                    height: 166,
+                    margin: [8, 8, 16, 8],
+                    spacing: [8, 8, 8, 8],
+                    styledMode: true,
+                    type: 'solidgauge'
+                },
+                pane: {
+                    background: {
+                        innerRadius: '90%',
+                        outerRadius: '120%',
+                        shape: 'arc'
+                    },
+                    center: ['50%', '70%'],
+                    endAngle: 90,
+                    startAngle: -90
+                },
+                series: [{
+                    data: [],
+                    dataLabels: {
+                        format: '{y:.0f}',
+                        y: -34
+                    },
+                    animation: false,
+                    animationLimit: 0,
+                    enableMouseTracking: false,
+                    innerRadius: '90%',
+                    radius: '120%'
+                }],
+                title: {
+                    margin: 0,
+                    text: dataScopes[dataScope],
+                    verticalAlign: 'bottom',
+                    widthAdjust: 0
+                },
+                yAxis: {
+                    labels: {
+                        distance: 4,
+                        y: 12
+                    },
+                    max: 50,
+                    min: 0,
+                    minorTickInterval: null,
+                    stops: [
+                        [0.0, '#4CAFFE'],
+                        [0.3, '#53BB6C'],
+                        [0.5, '#DDCE16'],
+                        [0.6, '#DF7642'],
+                        [0.7, '#DD2323']
+                    ],
+                    tickAmount: 2,
+                    visible: true
+                }
+            },
             states: {
                 active: {
                     enabled: true
@@ -427,55 +438,7 @@ fetch(
                     enabled: true
                 }
             }
-        }, {
-            cell: 'kpi-max-temperature',
-            type: 'KPI',
-            chartOptions: buildKPIChartOptions('TX' + temperatureScale),
-            states: {
-                active: {
-                    enabled: true
-                },
-                hover: {
-                    enabled: true
-                }
-            }
-        }, {
-            cell: 'kpi-rain',
-            type: 'KPI',
-            chartOptions: buildKPIChartOptions('RR1'),
-            states: {
-                active: {
-                    enabled: true
-                },
-                hover: {
-                    enabled: true
-                }
-            }
-        }, {
-            cell: 'kpi-ice',
-            type: 'KPI',
-            chartOptions: buildKPIChartOptions('ID'),
-            states: {
-                active: {
-                    enabled: true
-                },
-                hover: {
-                    enabled: true
-                }
-            }
-        }, {
-            cell: 'kpi-frost',
-            type: 'KPI',
-            chartOptions: buildKPIChartOptions('FD'),
-            states: {
-                active: {
-                    enabled: true
-                },
-                hover: {
-                    enabled: true
-                }
-            }
-        }],
+        }))],
         editMode: {
             enabled: true,
             contextMenu: {
@@ -519,25 +482,25 @@ fetch(
                                     width: '33.333%',
                                     height: '204px'
                                 }, {
-                                    id: 'kpi-temperature',
+                                    id: 'kpi-TN',
                                     width: '33.333%',
                                     height: '204px'
                                 }, {
-                                    id: 'kpi-max-temperature',
+                                    id: 'kpi-TX',
                                     width: '33.333%',
                                     height: '204px'
                                 }]
                             }, {
                                 cells: [{
-                                    id: 'kpi-rain',
+                                    id: 'kpi-RR',
                                     width: '33.333%',
                                     height: '204px'
                                 }, {
-                                    id: 'kpi-ice',
+                                    id: 'kpi-ID',
                                     width: '33.333%',
                                     height: '204px'
                                 }, {
-                                    id: 'kpi-frost',
+                                    id: 'kpi-FD',
                                     width: '33.333%',
                                     height: '204px'
                                 }]
@@ -554,91 +517,60 @@ fetch(
                     }]
                 }]
             }]
+        },
+        dataPool: {
+            connectors: [{
+                name: 'Active City',
+                type: 'CSV',
+                options: {
+                    dataTable: {
+                        modifier: {
+                            type: 'Chain',
+                            chain: [{
+                                type: 'Range',
+                                ranges: [{
+                                    column: 'time',
+                                    minValue: minRange,
+                                    maxValue: maxRange
+                                }]
+                            }, {
+                                type: 'Math',
+                                columnFormulas: [{
+                                    column: 'TNC',
+                                    formula: '= E1 - 273.15'
+                                }, {
+                                    column: 'TNF',
+                                    formula: '= E1 * 1.8 - 459.67'
+                                }, {
+                                    column: 'TXC',
+                                    formula: '= F1 - 273.15'
+                                }, {
+                                    column: 'TXF',
+                                    formula: '= F1 * 1.8 - 459.67'
+                                }]
+                            }]
+                        }
+                    }
+                }
+            }, {
+                name: 'cities',
+                type: 'CSV',
+                options: {
+                    csvURL: 'https://www.highcharts.com/samples/data/climate-cities.csv'
+                }
+            }, {
+                name: 'New York',
+                type: 'CSV',
+                options: {
+                    csvURL: 'https://assets.highcharts.com/dashboard-demodata/climate/cities/40.71_-74.01.csv'
+                }
+            }]
         }
-    });
+    })
+)).then(board => {
+    // Prepare board for city selection
+    console.log(board);
 }).catch(e => {
     // Silent errors in the console
     console.error(e);
 });
-
-function buildDates() {
-    const dates = [];
-
-    for (let date = new Date(Date.UTC(1951, 0, 5)),
-        dateEnd = new Date(Date.UTC(2010, 11, 25));
-        date <= dateEnd;
-        date = date.getUTCDate() >= 25 ?
-            new Date(Date.UTC(
-                date.getFullYear(),
-                date.getUTCMonth() + 1,
-                5
-            )) :
-            new Date(Date.UTC(
-                date.getFullYear(),
-                date.getUTCMonth(),
-                date.getUTCDate() + 10
-            ))
-    ) {
-        dates.push([date.getTime(), 0]);
-    }
-
-    return dates;
-}
-
-function buildKPIChartOptions(dataScope) {
-    return {
-        chart: {
-            height: 166,
-            margin: [8, 8, 16, 8],
-            spacing: [8, 8, 8, 8],
-            styledMode: true,
-            type: 'solidgauge'
-        },
-        pane: {
-            background: {
-                innerRadius: '90%',
-                outerRadius: '120%',
-                shape: 'arc'
-            },
-            center: ['50%', '70%'],
-            endAngle: 90,
-            startAngle: -90
-        },
-        series: [{
-            data: [],
-            dataLabels: {
-                format: '{y:.0f}',
-                y: -34
-            },
-            animation: false,
-            animationLimit: 0,
-            enableMouseTracking: false,
-            innerRadius: '90%',
-            radius: '120%'
-        }],
-        title: {
-            margin: 0,
-            text: dataScopes[dataScope.substring(0, 2)],
-            verticalAlign: 'bottom',
-            widthAdjust: 0
-        },
-        yAxis: {
-            labels: {
-                distance: 4,
-                y: 12
-            },
-            max: 50,
-            min: 0,
-            minorTickInterval: null,
-            stops: [
-                [0.0, '#4CAFFE'],
-                [0.3, '#53BB6C'],
-                [0.5, '#DDCE16'],
-                [0.6, '#DF7642'],
-                [0.7, '#DD2323']
-            ],
-            tickAmount: 2,
-            visible: true
-        }
-    };
-}

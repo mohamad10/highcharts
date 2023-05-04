@@ -1,7 +1,21 @@
-/* eslint-disable prefer-const, jsdoc/require-description */
-const { Range: RangeModifier } = Dashboards.DataModifier.types;
+/* eslint-disable prefer-const, quote-props, jsdoc/require-description */
 
-const dataPool = new Dashboards.DataPool();
+// left arrow
+Highcharts.SVGRenderer.prototype.symbols.leftarrow = (x, y, w, h) => [
+    'M', x + w / 2 - 1, y,
+    'L', x + w / 2 - 1, y + h,
+    x - w / 2 - 1, y + h / 2,
+    'Z'
+];
+
+// right arrow
+Highcharts.SVGRenderer.prototype.symbols.rightarrow = (x, y, w, h) => [
+    'M', x + w / 2 + 1, y,
+    'L', x + w / 2 + 1, y + h,
+    x + w + w / 2 + 1, y + h / 2,
+    'Z'
+];
+
 const dataScopes = {
     FD: 'Days with Frost',
     ID: 'Days with Ice',
@@ -9,42 +23,81 @@ const dataScopes = {
     TN: 'Average Temperature',
     TX: 'Maximal Temperature'
 };
-const dataTemperatures = {
-    C: 'Celsius',
-    F: 'Farenheit',
-    K: 'Kelvin'
-};
+
 const initialMin = Date.UTC(2010, 0, 5);
 const minRange = 30 * 24 * 3600 * 1000; // 30 days
 const maxRange = 2 * 365 * 24 * 3600 * 1000; // 2 years
-const defaultCity = 'New York';
-const defaultData = 'TXC';
 
-let citiesData;
-let citiesMap;
-let citiesTable;
-let cityGrid;
-let cityScope = defaultCity;
-let citySeries;
-let dataScope = defaultData;
-let navigatorSeries;
-let worldDate = Date.UTC(2010, 11, 25); // months start with 0
-let kpis = {};
-let darkMode = false;
+let cityScope = 'New York';
+let dataScope = 'TXC';
 let temperatureScale = 'C';
 
-async function setupDashboard() {
-
-    citiesData = await buildCitiesData();
-    buildSymbols();
-
-    const cityConnector = await dataPool.getConnector(cityScope);
-    const map = await fetch(
-        'https://code.highcharts.com/mapdata/custom/world.topo.json'
-    ).then(response => response.json());
-    const mapPoints = await buildCitiesMap();
-
-    return new Promise(resolve => Dashboards.board('container', {
+// Load world map for Highcharts Dashboards
+fetch(
+    'https://code.highcharts.com/mapdata/custom/world.topo.json'
+).then(
+    response => response.json()
+).then(async world => {
+    Dashboards.board('container', {
+        dataPool: {
+            connectors: [{
+                name: 'Active City',
+                type: 'CSV',
+                options: {
+                    dataTable: {
+                        aliases: {
+                            'avg. ˚C': 'TNC',
+                            'avg. ˚F': 'TNF',
+                            'avg. ˚K': 'TN',
+                            'max ˚C': 'TXC',
+                            'max ˚F': 'TXF',
+                            'max ˚K': 'TX',
+                            'Frost': 'FD',
+                            'Ice': 'ID',
+                            'Rain': 'RR1'
+                        },
+                        modifier: {
+                            type: 'Chain',
+                            chain: [{
+                                type: 'Range',
+                                ranges: [{
+                                    column: 'time',
+                                    minValue: minRange,
+                                    maxValue: maxRange
+                                }]
+                            }, {
+                                type: 'Math',
+                                columnFormulas: [{
+                                    column: 'TNC',
+                                    formula: '= E1 - 273.15'
+                                }, {
+                                    column: 'TNF',
+                                    formula: '= E1 * 1.8 - 459.67'
+                                }, {
+                                    column: 'TXC',
+                                    formula: '= F1 - 273.15'
+                                }, {
+                                    column: 'TXF',
+                                    formula: '= F1 * 1.8 - 459.67'
+                                }]
+                            }]
+                        }
+                    }
+                }
+            }, {
+                name: 'cities',
+                type: 'CSV',
+                options: {
+                    csvURL: 'https://www.highcharts.com/samples/data/climate-cities.csv'
+                }
+            }, {
+                name: 'New York',
+                type: 'CSV',
+                options: {
+                    csvURL: 'https://assets.highcharts.com/dashboard-demodata/climate/cities/40.71_-74.01.csv'
+                }
+            }]
+        },
         components: [{
             cell: 'time-range-selector',
             type: 'Highcharts',
@@ -90,11 +143,7 @@ async function setupDashboard() {
                     },
                     series: [{
                         name: cityScope,
-                        data: cityConnector.table.getRows(
-                            void 0,
-                            void 0,
-                            ['time', dataScope]
-                        ),
+                        // data: active city is added after board creation
                         animation: false,
                         animationLimit: 0
                     }],
@@ -129,46 +178,10 @@ async function setupDashboard() {
                     visible: false,
                     min: initialMin,
                     minRange: minRange,
-                    maxRange: maxRange,
-                    events: {
-                        afterSetExtremes: async function (e) {
-                            const table =
-                                await dataPool.getConnectorTable(cityScope);
-                            const data = await buildCityData(
-                                e.min || e.target.min,
-                                e.max || e.target.max
-                            );
-                            const lastPoint = data[data.length - 1];
-                            const startIndex =
-                                table.getRowIndexBy('time', data[0][0]);
-
-                            worldDate = lastPoint[0];
-
-                            citiesMap.setData(await buildCitiesMap());
-
-                            // Update only if dragging the navigator
-                            if (e.trigger === 'navigator') {
-                                updateKPI(false);
-                            }
-
-                            if (!cityGrid || !citySeries) {
-                                return; // not ready
-                            }
-
-                            cityGrid.scrollToRow(startIndex);
-                            cityGrid.update(); // Force redraw;
-
-                            citySeries.update({ data });
-                        }
-                    }
+                    maxRange: maxRange
                 },
                 yAxis: {
                     visible: false
-                }
-            },
-            events: {
-                mount: function () {
-                    navigatorSeries = this.chart.series[1];
                 }
             }
         }, {
@@ -177,10 +190,22 @@ async function setupDashboard() {
             chartConstructor: 'mapChart',
             chartOptions: {
                 chart: {
-                    map,
+                    map: world,
                     styledMode: true
                 },
-                colorAxis: buildColorAxis(),
+                colorAxis: {
+                    startOnTick: false,
+                    endOnTick: false,
+                    max: dataScope[2] === 'C' ? 50 : 122,
+                    min: dataScope[2] === 'C' ? 0 : 32,
+                    stops: [
+                        [0.0, '#4CAFFE'],
+                        [0.3, '#53BB6C'],
+                        [0.5, '#DDCE16'],
+                        [0.6, '#DF7642'],
+                        [0.7, '#DD2323']
+                    ]
+                },
                 legend: {
                     enabled: false
                 },
@@ -200,7 +225,7 @@ async function setupDashboard() {
                 }, {
                     type: 'mappoint',
                     name: 'Cities',
-                    data: mapPoints,
+                    // data: city points are added after board creation
                     animation: false,
                     animationLimit: 0,
                     allowPointSelect: true,
@@ -224,36 +249,6 @@ async function setupDashboard() {
                         verticalAlign: 'bottom',
                         y: -16
                     }],
-                    events: {
-                        click: async function (e) {
-
-                            if (!cityGrid || !citySeries) {
-                                return; // not ready
-                            }
-
-                            const point = e.point;
-                            const city = point.name;
-
-                            if (cityScope === city) {
-                                return; // already selected
-                            }
-
-                            cityScope = city;
-                            const connector = await dataPool.getConnector(city);
-
-                            syncRefreshCharts(
-                                connector,
-                                dataScope,
-                                city
-                            );
-
-                            // Update DataGrid
-                            cityGrid.dataTable = connector.table;
-                            cityGrid.update(); // force redraw
-
-                            updateKPI(true);
-                        }
-                    },
                     marker: {
                         enabled: true,
                         lineWidth: 2,
@@ -269,18 +264,6 @@ async function setupDashboard() {
                             }
                         },
                         symbol: 'mapmarker'
-                    },
-                    tooltip: {
-                        footerFormat: '',
-                        headerFormat: '',
-                        pointFormatter: function () {
-                            const point = this;
-
-                            return (
-                                `<b>${point.name}</b><br>` +
-                                tooltipFormatter(point.y, point.name)
-                            );
-                        }
                     }
                 }],
                 title: {
@@ -304,17 +287,11 @@ async function setupDashboard() {
                     shape: 'rect',
                     useHTML: true
                 }
-            },
-            events: {
-                mount: function () {
-                    // call action
-                    citiesMap = this.chart.series[1];
-                }
             }
         }, {
             cell: 'city-chart',
             type: 'Highcharts',
-            connector: cityConnector,
+            connector: 'Active City',
             sync: {
                 highlight: true
             },
@@ -345,29 +322,31 @@ async function setupDashboard() {
                 legend: {
                     enabled: false
                 },
-                colorAxis: buildColorAxis(),
+                colorAxis: {
+                    startOnTick: false,
+                    endOnTick: false,
+                    max: 50,
+                    min: 0,
+                    stops: [
+                        [0.0, '#4CAFFE'],
+                        [0.3, '#53BB6C'],
+                        [0.5, '#DDCE16'],
+                        [0.6, '#DF7642'],
+                        [0.7, '#DD2323']
+                    ]
+                },
                 series: [{
                     // type: 'spline',
-                    name: defaultCity,
+                    name: cityScope,
                     animation: false,
                     animationLimit: 0,
-                    events: {
-                        afterAnimate: () => resolve()
-                    },
                     marker: {
                         enabledThreshold: 0.5
-                    },
-                    tooltip: {
-                        footerFormat: '',
-                        headerFormat: '',
-                        pointFormatter: function () {
-                            return tooltipFormatter(this.y);
-                        }
                     }
                 }],
                 title: {
                     margin: 20,
-                    text: dataScopes[dataScope.substring(0, 2)],
+                    text: dataScopes.TX,
                     x: 15,
                     y: 5
                 },
@@ -382,19 +361,14 @@ async function setupDashboard() {
                 },
                 yAxis: {
                     title: {
-                        text: dataTemperatures[dataScope[2] || 'K']
+                        text: 'C'
                     }
-                }
-            },
-            events: {
-                mount: function () {
-                    citySeries = this.chart.series[0];
                 }
             }
         }, {
             cell: 'selection-grid',
             type: 'DataGrid',
-            connector: cityConnector,
+            connector: 'Active City',
             sync: {
                 highlight: true
             },
@@ -434,43 +408,17 @@ async function setupDashboard() {
                     }
                 }
             },
-            editable: true,
-            events: {
-                mount: function () {
-                    // call action
-                    cityGrid = this.dataGrid;
-                }
-            }
+            editable: true
         }, {
             cell: 'kpi-data',
             type: 'KPI',
             title: cityScope,
             value: 10,
-            valueFormat: '{value:.0f}m',
-            events: {
-                mount: function () {
-                    kpis.data = this;
-                    updateKPI();
-                }
-            }
+            valueFormat: '{value:.0f}m'
         }, {
             cell: 'kpi-temperature',
             type: 'KPI',
             chartOptions: buildKPIChartOptions('TN' + temperatureScale),
-            events: {
-                mount: function () {
-                    kpis.TN = this;
-                },
-                click: function () {
-                    dataScope = 'TN' + temperatureScale;
-
-                    syncRefreshCharts(
-                        citiesData[cityScope].connector,
-                        dataScope,
-                        cityScope
-                    );
-                }
-            },
             states: {
                 active: {
                     enabled: true
@@ -483,23 +431,6 @@ async function setupDashboard() {
             cell: 'kpi-max-temperature',
             type: 'KPI',
             chartOptions: buildKPIChartOptions('TX' + temperatureScale),
-            events: {
-                mount: function () {
-                    kpis.TX = this;
-                },
-                click: function () {
-                    dataScope = 'TX' + temperatureScale;
-
-                    syncRefreshCharts(
-                        citiesData[cityScope].connector,
-                        dataScope,
-                        cityScope
-                    );
-                },
-                afterLoad: function () {
-                    this.parentCell.setActiveState();
-                }
-            },
             states: {
                 active: {
                     enabled: true
@@ -512,20 +443,6 @@ async function setupDashboard() {
             cell: 'kpi-rain',
             type: 'KPI',
             chartOptions: buildKPIChartOptions('RR1'),
-            events: {
-                mount: function () {
-                    kpis.RR1 = this;
-                },
-                click: function () {
-                    dataScope = 'RR1';
-
-                    syncRefreshCharts(
-                        citiesData[cityScope].connector,
-                        dataScope,
-                        cityScope
-                    );
-                }
-            },
             states: {
                 active: {
                     enabled: true
@@ -538,20 +455,6 @@ async function setupDashboard() {
             cell: 'kpi-ice',
             type: 'KPI',
             chartOptions: buildKPIChartOptions('ID'),
-            events: {
-                mount: function () {
-                    kpis.ID = this;
-                },
-                click: function () {
-                    dataScope = 'ID';
-
-                    syncRefreshCharts(
-                        citiesData[cityScope].connector,
-                        dataScope,
-                        cityScope
-                    );
-                }
-            },
             states: {
                 active: {
                     enabled: true
@@ -564,20 +467,6 @@ async function setupDashboard() {
             cell: 'kpi-frost',
             type: 'KPI',
             chartOptions: buildKPIChartOptions('FD'),
-            events: {
-                mount: function () {
-                    kpis.FD = this;
-                },
-                click: function () {
-                    dataScope = 'FD';
-
-                    syncRefreshCharts(
-                        citiesData[cityScope].connector,
-                        dataScope,
-                        cityScope
-                    );
-                }
-            },
             states: {
                 active: {
                     enabled: true
@@ -599,42 +488,11 @@ async function setupDashboard() {
                     {
                         id: 'dark-mode',
                         type: 'toggle',
-                        text: 'Dark mode',
-                        events: {
-                            click: function () {
-                                const board = this.menu.editMode.board,
-                                    darkModeClass = 'highcharts-dark';
-
-                                darkMode = !darkMode;
-
-                                if (darkMode) {
-                                    board.container.classList
-                                        .add(darkModeClass);
-                                } else {
-                                    board.container.classList
-                                        .remove(darkModeClass);
-                                }
-                            }
-                        }
+                        text: 'Dark mode'
                     }, {
                         id: 'fahrenheit',
                         type: 'toggle',
-                        text: 'Fahrenheit',
-                        events: {
-                            click: function () {
-                                // Change temperature scale.
-                                temperatureScale = temperatureScale === 'C' ? 'F' : 'C';
-                                dataScope = 'TX' + temperatureScale;
-
-                                // Update the board.
-                                syncRefreshCharts(
-                                    citiesData[cityScope].connector,
-                                    dataScope,
-                                    cityScope
-                                );
-                                updateKPI(true);
-                            }
-                        }
+                        text: 'Fahrenheit'
                     }
                 ]
             }
@@ -697,184 +555,11 @@ async function setupDashboard() {
                 }]
             }]
         }
-    }));
-}
-
-async function setupDataPool() {
-
-    dataPool.setConnectorOptions({
-        name: 'cities',
-        type: 'CSV',
-        options: {
-            csvURL: 'https://www.highcharts.com/samples/data/climate-cities.csv'
-        }
     });
-
-    citiesTable = await dataPool.getConnectorTable('cities');
-
-    for (const row of citiesTable.getRowObjects()) {
-        dataPool.setConnectorOptions({
-            name: row.city,
-            type: 'CSV',
-            options: {
-                csvURL: row.csv
-            }
-        });
-    }
-}
-
-async function setupCitiesData() {
-    const cities = citiesTable.modified;
-    const data = citiesData;
-    const promises = [];
-    const rows = cities.getRows(
-        void 0,
-        void 0,
-        ['lat', 'lon', 'city', 'country', 'elevation']
-    );
-
-    for (const row of rows) {
-        const city = row[2];
-
-        if (!data[city]) {
-            promises.push(
-                dataPool
-                    .getConnector(city)
-                    .then(connector => {
-                        decorateCityTable(connector.table);
-                        data[city] = {
-                            country: row[3],
-                            elevation: row[4],
-                            lat: row[0],
-                            lon: row[1],
-                            name: row[2],
-                            connector
-                        };
-                    })
-            );
-        }
-    }
-
-    await Promise.all(promises);
-
-    if (citiesMap) {
-        citiesMap.setData(await buildCitiesMap());
-    }
-}
-
-async function main() {
-    await setupDataPool();
-    await setupDashboard();
-    await setupCitiesData();
-}
-
-main().catch(e => console.error(e));
-
-/* *
- *
- *  Helper Functions
- *
- * */
-
-async function buildCitiesData() {
-    const cities = citiesTable.modified;
-    const data = {};
-    const initialRow = await cities.getRow(
-        cities.getRowIndexBy('city', cityScope),
-        ['lat', 'lon', 'city', 'country', 'elevation']
-    );
-    const connector = await dataPool.getConnector(initialRow[2]);
-
-    await decorateCityTable(connector.table);
-
-    data[cityScope] = {
-        country: initialRow[3],
-        elevation: initialRow[4],
-        lat: initialRow[0],
-        lon: initialRow[1],
-        name: initialRow[2],
-        connector
-    };
-
-    return data;
-}
-
-async function buildCitiesMap() {
-    return Object
-        .keys(citiesData)
-        .map(city => {
-            const data = citiesData[city];
-            const table = data.connector.table.modified;
-            const y = table.getCellAsNumber(
-                dataScope,
-                table.getRowIndexBy('time', worldDate)
-            ) || 0;
-
-            return {
-                lat: data.lat,
-                lon: data.lon,
-                name: data.name,
-                selected: city === cityScope,
-                y
-            };
-        })
-        .sort(city => city.lat);
-}
-
-async function buildCityData(minValue, maxValue) {
-    const table = await dataPool.getConnectorTable(cityScope);
-
-    table.setModifier(new RangeModifier({
-        ranges: [{
-            column: 'time',
-            minValue,
-            maxValue
-        }]
-    }));
-
-    return table.modified.getRows(void 0, void 0, ['time', dataScope]);
-}
-
-function buildColorAxis() {
-
-    // temperature
-    if (dataScope[0] === 'T') {
-        return {
-            startOnTick: false,
-            endOnTick: false,
-            max: dataScope[2] === 'C' ? 50 : 122,
-            min: dataScope[2] === 'C' ? 0 : 32,
-            stops: buildColorStops(dataScope)
-        };
-    }
-
-    // days
-    return {
-        max: 10,
-        min: 0,
-        stops: buildColorStops(dataScope)
-    };
-}
-
-function buildColorStops(dataScope) {
-
-    // temperature
-    if (dataScope[0] === 'T') {
-        return [
-            [0.0, '#4CAFFE'],
-            [0.3, '#53BB6C'],
-            [0.5, '#DDCE16'],
-            [0.6, '#DF7642'],
-            [0.7, '#DD2323']
-        ];
-    }
-
-    // days
-    return [
-        [0.0, '#C2CAEB'],
-        [1.0, '#162870']
-    ];
-}
+}).catch(e => {
+    // Silent errors in the console
+    console.error(e);
+});
 
 function buildDates() {
     const dates = [];
@@ -920,13 +605,7 @@ function buildKPIChartOptions(dataScope) {
             startAngle: -90
         },
         series: [{
-            data: [(() => {
-                const table = citiesData[cityScope].connector.table.modified;
-                return table.getCellAsNumber(
-                    dataScope,
-                    table.getRowIndexBy('time', worldDate)
-                ) || 0;
-            })()],
+            data: [],
             dataLabels: {
                 format: '{y:.0f}',
                 y: -34
@@ -948,222 +627,18 @@ function buildKPIChartOptions(dataScope) {
                 distance: 4,
                 y: 12
             },
-            max: (
-                dataScope[0] === 'T' ?
-                    dataScope[2] === 'C' ? 50 : 122 :
-                    10
-            ),
-            min: (
-                dataScope[0] === 'T' ?
-                    dataScope[2] === 'C' ? -10 : 14 :
-                    0
-            ),
+            max: 50,
+            min: 0,
             minorTickInterval: null,
-            stops: buildColorStops(dataScope),
+            stops: [
+                [0.0, '#4CAFFE'],
+                [0.3, '#53BB6C'],
+                [0.5, '#DDCE16'],
+                [0.6, '#DF7642'],
+                [0.7, '#DD2323']
+            ],
             tickAmount: 2,
             visible: true
         }
     };
-}
-
-function buildSymbols() {
-    // left arrow
-    Highcharts.SVGRenderer.prototype.symbols.leftarrow = (x, y, w, h) => [
-        'M', x + w / 2 - 1, y,
-        'L', x + w / 2 - 1, y + h,
-        x - w / 2 - 1, y + h / 2,
-        'Z'
-    ];
-    // right arrow
-    Highcharts.SVGRenderer.prototype.symbols.rightarrow = (x, y, w, h) => [
-        'M', x + w / 2 + 1, y,
-        'L', x + w / 2 + 1, y + h,
-        x + w + w / 2 + 1, y + h / 2,
-        'Z'
-    ];
-}
-
-function decorateCityTable(table) {
-    const columns = ['TN', 'TX'], // Average, Maximal temperature
-        scales = ['C', 'F'];
-
-    columns.forEach(column => {
-        scales.forEach(scale => {
-            const newColumn = column + scale;
-            let temperatureColumn = table.getColumn(newColumn);
-
-            if (!temperatureColumn) {
-                table.setColumns({
-                    [newColumn]: table
-                        .getColumn(column)
-                        .map(kelvin => Highcharts.correctFloat(
-                            scale === 'C' ?
-                                (kelvin - 273.15) :
-                                (kelvin * 1.8 - 459.67),
-                            3
-                        ))
-                });
-            }
-        });
-    });
-
-    table.setColumn(
-        'Date',
-        table
-            .getColumn('time')
-            .map(timestamp => new Date(timestamp)
-                .toISOString()
-                .substring(0, 10)
-            )
-    );
-
-    table.setColumnAlias('avg. ˚C', 'TNC');
-    table.setColumnAlias('avg. ˚F', 'TNF');
-    table.setColumnAlias('avg. ˚K', 'TN');
-    table.setColumnAlias('max ˚C', 'TXC');
-    table.setColumnAlias('max ˚F', 'TXF');
-    table.setColumnAlias('max ˚K', 'TX');
-    table.setColumnAlias('Frost', 'FD');
-    table.setColumnAlias('Ice', 'ID');
-    table.setColumnAlias('Rain', 'RR1');
-
-}
-
-function tooltipFormatter(value, city) {
-    let tooltip = '';
-
-    if (city) {
-        tooltip += `Elevation: ${citiesData[city].elevation}m<br>`;
-    }
-
-    // temperature values (original Kelvin)
-    if (dataScope[0] === 'T') {
-
-        if (dataScope[2] === 'C') {
-            tooltip += value + '˚C<br>';
-        }
-
-        if (dataScope[2] === 'F') {
-            tooltip += value + '˚F<br>';
-        }
-
-    // rain days
-    } else if (dataScope === 'RR1') {
-        tooltip += Highcharts.correctFloat(value, 0) + ' rainy days';
-
-    // ice days
-    } else if (dataScope === 'ID') {
-        tooltip += Highcharts.correctFloat(value, 0) + ' icy days';
-
-    // frost days
-    } else if (dataScope === 'FD') {
-        tooltip += Highcharts.correctFloat(value, 0) + ' frosty days';
-
-    // fallback
-    } else {
-        tooltip += Highcharts.correctFloat(value, 4);
-    }
-
-    return tooltip;
-}
-
-function updateKPI(animation) {
-    const data = citiesData[cityScope];
-    const table = data.connector.table.modified;
-
-    for (const [key, kpi] of Object.entries(kpis)) {
-        if (key === 'data') {
-            kpis.data.update({
-                title: data.name,
-                value: data.elevation,
-                subtitle: 'Elevation'
-            });
-        } else {
-            kpi.chart.series[0].points[0].update(
-                table.getCellAsNumber(
-                    key + (key[0] === 'T' ? temperatureScale : ''),
-                    table.getRowIndexBy('time', worldDate)
-                ) || 0,
-                true,
-                animation
-            );
-        }
-    }
-}
-
-function syncRefreshCharts(connector, dataScope, cityScope) {
-    const data = connector.table.getRows(
-        void 0, void 0,
-        ['time', dataScope]
-    );
-    const isColumnSeries = ['RR1', 'FD', 'ID'].indexOf(dataScope) >= 0;
-    const columnSeriesOptions = {
-        threshold: isColumnSeries ? 0 : null
-    };
-
-    // update navigator
-    navigatorSeries.update({
-        name: cityScope,
-        minPointLength: 1, // workaround
-        pointPadding: 0,
-        groupPadding: 0,
-        crisp: false,
-        data,
-        ...columnSeriesOptions
-    });
-
-    // update chart
-    citySeries.chart.update({
-        chart: {
-            animation: true
-        },
-        title: {
-            text: cityScope
-        }
-    }, false);
-
-    citySeries.update(columnSeriesOptions);
-
-    // Update the main chart
-    Highcharts.fireEvent(
-        navigatorSeries.chart.xAxis[0],
-        'afterSetExtremes'
-    );
-
-    // update colorAxis
-    citiesMap.chart.update({
-        colorAxis: buildColorAxis()
-    });
-
-    citySeries.chart.update({
-        colorAxis: buildColorAxis(),
-        title: {
-            text: dataScopes[dataScope.substring(0, 2)]
-        },
-        yAxis: {
-            title: {
-                text: (
-                    dataScope[0] === 'T' ?
-                        dataTemperatures[dataScope[2] || 'K'] :
-                        'Days'
-                )
-            }
-        },
-        chart: {
-            type: isColumnSeries ? 'column' : 'spline'
-        }
-    });
-
-    buildCitiesMap().then(data => {
-        citiesMap.setData(data);
-    });
-
-    // Reset the animation.
-    setTimeout(() => {
-        citySeries.chart.update({
-            chart: {
-                animation: false
-            }
-        }, false);
-    });
 }

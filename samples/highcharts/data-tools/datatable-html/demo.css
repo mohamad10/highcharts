@@ -43,6 +43,12 @@ table {
     min-width: 50%;
 }
 
+@media screen and (max-width: 800px) {
+    form {
+        flex-direction: column;
+    }
+}
+
 table td,
 table th {
     line-height: 1.5em;

@@ -176,8 +176,8 @@ QUnit.test('Series.update', function (assert) {
     }
 
     assert.strictEqual(
-        chart.series[0].points[0].graphic.symbolName,
-        'roundedRect',
+        chart.series[0].points[0].graphic.element.nodeName,
+        'rect',
         'Column point'
     );
 

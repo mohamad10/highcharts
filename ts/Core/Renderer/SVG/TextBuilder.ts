@@ -68,9 +68,11 @@ class TextBuilder {
             textStyles && textStyles.textOverflow === 'ellipsis'
         );
         this.noWrap = Boolean(textStyles && textStyles.whiteSpace === 'nowrap');
+        this.fontSize = textStyles && textStyles.fontSize;
     }
 
     public ellipsis: boolean;
+    public fontSize: any;
     public noWrap: boolean;
     public renderer: SVGRenderer;
     public svgElement: SVGElement;
@@ -93,7 +95,7 @@ class TextBuilder {
             textStr = pick(wrapper.textStr, '').toString() as string,
             hasMarkup = textStr.indexOf('<') !== -1,
             childNodes = textNode.childNodes,
-            tempParent = !wrapper.added && renderer.box,
+            tempParent = this.width && !wrapper.added && renderer.box,
             regexMatchBreaks = /<br.*?>/g,
             // The buildText code is quite heavy, so if we're not changing
             // something that affects the text, skip it (#6113).
@@ -103,7 +105,7 @@ class TextBuilder {
                 this.noWrap,
                 this.textLineHeight,
                 this.textOutline,
-                wrapper.getStyle('font-size'),
+                this.fontSize,
                 this.width
             ].join(',');
 
@@ -137,7 +139,7 @@ class TextBuilder {
         } else if (textStr !== '') {
 
             if (tempParent) {
-                // attach it to the DOM to read offset width and font size
+                // attach it to the DOM to read offset width
                 tempParent.appendChild(textNode);
             }
 
@@ -217,7 +219,7 @@ class TextBuilder {
 
                     if (i === 0 && br.previousSibling.nodeType === 1) {
                         wrapper.firstLineMetrics = wrapper.renderer
-                            .fontMetrics(br.previousSibling as DOMElementType);
+                            .fontMetrics(void 0, br.previousSibling as any);
                     }
 
                     attr(br, {
@@ -268,7 +270,7 @@ class TextBuilder {
                             0,
                             // Substract the font face to make room for the
                             // ellipsis itself
-                            width - 0.8 * dy
+                            width - parseInt(this.fontSize || 12, 10)
                         ),
                         // Build the text to test for
                         (text: string, currentIndex: number): string =>
@@ -376,6 +378,8 @@ class TextBuilder {
      * @return {number} The rendered line height
      */
     private getLineHeight(node: DOMElementType|Text): number {
+        let fontSizeStyle;
+
         // If the node is a text node, use its parent
         const element: DOMElementType|null = (
             node.nodeType === win.Node.TEXT_NODE
@@ -383,9 +387,19 @@ class TextBuilder {
             node.parentElement :
             node as DOMElementType;
 
+        if (!this.renderer.styledMode) {
+            fontSizeStyle =
+                element && /(px|em)$/.test(element.style.fontSize) ?
+                    element.style.fontSize :
+                    (this.fontSize || this.renderer.style.fontSize || 12);
+        }
+
         return this.textLineHeight ?
             parseInt(this.textLineHeight.toString(), 10) :
-            this.renderer.fontMetrics(element || this.svgElement.element).h;
+            this.renderer.fontMetrics(
+                fontSizeStyle as any,
+                element || this.svgElement.element
+            ).h;
     }
 
     /**
@@ -523,6 +537,12 @@ class TextBuilder {
                     } catch (e) {
                         '';
                     }
+
+                // Legacy
+                } else if (renderer.getSpanWidth) { // #9058 jsdom
+                    textNode.textContent = getString(text || words, charEnd);
+                    lengths[end] = startAt +
+                        renderer.getSpanWidth(svgElement, textNode as any);
                 }
             }
             return lengths[end];

@@ -161,8 +161,8 @@ QUnit.test('Option chart border and background update', function (assert) {
         'Chart border width is updated'
     );
     assert.strictEqual(
-        chart.chartBackground.r,
-        10,
+        chart.chartBackground.element.getAttribute('rx'),
+        '10',
         'Chart border radius is updated'
     );
 
@@ -183,8 +183,8 @@ QUnit.test('Option chart border and background update', function (assert) {
     );
 
     assert.strictEqual(
-        chart.chartBackground.r,
-        0,
+        chart.chartBackground.element.getAttribute('rx'),
+        '0',
         'Chart border radius is updated'
     );
 });
@@ -317,7 +317,7 @@ QUnit.test('Option chart.options3d update', function (assert) {
 
     assert.strictEqual(
         chart.series[0].points[0].graphic.element.nodeName,
-        'path',
+        'rect',
         '2D column'
     );
 
@@ -348,8 +348,8 @@ QUnit.test('Option chart.options3d update', function (assert) {
     });
 
     assert.strictEqual(
-        chart.series[0].points[0].graphic.symbolName,
-        'roundedRect',
+        chart.series[0].points[0].graphic.element.nodeName,
+        'rect',
         'Back to 2D column'
     );
 });
@@ -380,15 +380,9 @@ QUnit.test('Option chart shadows update', function (assert) {
         ]
     });
 
-    assert.ok(
-        chart.chartBackground.attr('filter').indexOf('drop-shadow') === -1,
-        'Chart shadow should not exist'
-    );
+    assert.ok(!chart.chartBackground.shadows, 'Chart shadow does not exist');
 
-    assert.ok(
-        chart.plotBackground.attr('filter').indexOf('drop-shadow') === -1,
-        'Plot shadow should not exist'
-    );
+    assert.ok(!chart.plotBackground.shadows, 'Plot shadow does not exist');
 
     chart.update({
         chart: {
@@ -397,15 +391,9 @@ QUnit.test('Option chart shadows update', function (assert) {
         }
     });
 
-    assert.ok(
-        chart.chartBackground.attr('filter').indexOf('drop-shadow') !== -1,
-        'Chart shadow should exist'
-    );
+    assert.ok(chart.chartBackground.shadows, 'Chart shadow exists');
 
-    assert.ok(
-        chart.plotBackground.attr('filter').indexOf('drop-shadow') !== -1,
-        'Plot shadow should exist'
-    );
+    assert.ok(chart.plotBackground.shadows, 'Plot shadow exists');
 
     chart.update({
         chart: {

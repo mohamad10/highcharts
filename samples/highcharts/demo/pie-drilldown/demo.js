@@ -23,7 +23,6 @@ Highcharts.chart('container', {
 
     plotOptions: {
         series: {
-            borderRadius: 5,
             dataLabels: {
                 enabled: true,
                 format: '{point.name}: {point.y:.1f}%'

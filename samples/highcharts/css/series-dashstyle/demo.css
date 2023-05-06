@@ -1,4 +1,4 @@
-@import url("https://code.highcharts.com/css/highcharts.css");
+@import "https://code.highcharts.com/css/highcharts.css";
 
 #container {
     height: 400px;
@@ -10,12 +10,12 @@
 /* All black, rely on the dashes */
 .highcharts-series-0 .highcharts-graph,
 .highcharts-series-1 .highcharts-graph {
-    stroke: var(--highcharts-neutral-color-100);
+    stroke: black;
 }
 
 .highcharts-series-0 .highcharts-point,
 .highcharts-series-1 .highcharts-point {
-    stroke: var(--highcharts-neutral-color-100);
+    fill: black;
 }
 
 .highcharts-series-0 {

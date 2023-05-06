@@ -270,8 +270,7 @@ QUnit.test('Slice color after drilldown and select (#4359)', function (assert) {
                 pie: {
                     depth: 35,
                     allowPointSelect: true,
-                    colors: ['#00e500', '#004400'],
-                    ignoreHiddenPoint: false
+                    colors: ['#00e500', '#004400']
                 }
             },
             series: [
@@ -282,20 +281,13 @@ QUnit.test('Slice color after drilldown and select (#4359)', function (assert) {
                             y: 23.73
                         },
                         {
-                            y: 73.27,
+                            y: 76.27,
                             drilldown: 'Recycled Materials'
-                        },
-                        {
-                            y: 3,
-                            visible: false
                         }
                     ]
                 }
             ],
             drilldown: {
-                animation: {
-                    duration: Number.MIN_VALUE
-                },
                 series: [
                     {
                         animation: false,
@@ -345,13 +337,6 @@ QUnit.test('Slice color after drilldown and select (#4359)', function (assert) {
         chart3d.series[0].points[0].graphic.top.attr('fill'),
         chart3d.series[0].options.colors[0],
         'Proper select-state color'
-    );
-
-    chart.drillUp();
-    assert.strictEqual(
-        chart.series[0].points[2].graphic.visibility,
-        'hidden',
-        'The invisible slice should still be hidden after drill-up (#18303)'
     );
 
     chart.destroy();

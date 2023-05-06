@@ -7,7 +7,7 @@ import '/base/code/es-modules/Data/Connectors/HTMLTableConnector.js';
 const { test, only } = QUnit;
 
 test('DataConnector metadata', function (assert) {
-    const connector = new CSVConnector();
+    const connector = new CSVConnector(undefined, {});
 
     connector.describeColumns({
         'column1': {
@@ -60,17 +60,17 @@ test('DataConnector registry', function (assert) {
     // DataConnector.registry = {};
 
     const connectors = [
-        'CSV',
-        'HTMLTable',
-        'GoogleSheets'
+        'CSVConnector',
+        'HTMLTableConnector',
+        'GoogleSheetsConnector'
     ];
 
-    for (const connector of connectors) {
+    connectors.forEach(connector => {
         assert.strictEqual(
-            typeof DataConnector.types[connector],
+            typeof DataConnector.getConnector(connector),
             'function',
             `${connector} is registered`
         )
-    }
+   });
 
 });

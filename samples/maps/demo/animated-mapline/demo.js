@@ -91,7 +91,12 @@
             {
                 data,
                 keys: ['hc-key', 'color', 'info'],
-                name: 'Coffee'
+                name: 'Coffee',
+                states: {
+                    hover: {
+                        color: '#a4edba'
+                    }
+                }
             },
             {
                 type: 'mapline',

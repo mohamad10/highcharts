@@ -24,6 +24,7 @@ import type BubbleSeries from './BubbleSeries';
 import type { BubbleSizeByValue } from './BubbleSeriesOptions';
 import type ColorType from '../../Core/Color/ColorType';
 import type CSSObject from '../../Core/Renderer/CSSObject';
+import type FontMetricsObject from '../../Core/Renderer/FontMetricsObject';
 import type FormatUtilities from '../../Core/FormatUtilities';
 import type {
     LegendItemObject,
@@ -122,6 +123,7 @@ class BubbleLegendItem {
      * */
 
     public chart: Chart = void 0 as any;
+    public fontMetrics: FontMetricsObject = void 0 as any;
     public legend: Legend = void 0 as any;
     public maxLabel: BBoxObject = void 0 as any;
     public movementX: number = void 0 as any;
@@ -186,6 +188,11 @@ class BubbleLegendItem {
 
         let connectorSpace;
 
+        // Predict label dimensions
+        this.fontMetrics = chart.renderer.fontMetrics(
+            (options.labels as any).style.fontSize
+        );
+
         // Do not create bubbleLegend now if ranges or ranges valeus are not
         // specified or if are empty array.
         if (!ranges || !ranges.length || !isNumber(ranges[0].value)) {
@@ -221,7 +228,7 @@ class BubbleLegendItem {
             connectorSpace : 0;
 
         legendItem.labelWidth = size + connectorSpace + itemDistance;
-        legendItem.labelHeight = size + maxLabel.height / 2;
+        legendItem.labelHeight = size + this.fontMetrics.h / 2;
     }
 
     /**
@@ -356,15 +363,15 @@ class BubbleLegendItem {
         legendItem.symbol.translateX = 0;
         legendItem.symbol.translateY = 0;
 
-        // To use handleOverflow method
-        legendItem.symbol.add(legendItem.label);
-        legendItem.label.add(legendItem.group);
-
         for (const range of this.ranges) {
             if (range.value >= (zThreshold as any)) {
                 this.renderRange(range);
             }
         }
+
+        // To use handleOverflow method
+        legendItem.symbol.add(legendItem.label);
+        legendItem.label.add(legendItem.group);
 
         this.hideOverlappingLabels();
     }
@@ -399,6 +406,9 @@ class BubbleLegendItem {
             posX = mainRange.radius || 0,
             posY = (elementCenter as any) - absoluteRadius -
                 (borderWidth as any) / 2 + (connectorWidth as any) / 2,
+            fontMetrics = this.fontMetrics,
+            labelMovement = fontMetrics.f / 2 -
+                (fontMetrics.h - fontMetrics.f) / 2,
             crispMovement = (posY % 1 ? 1 : 0.5) -
                 ((connectorWidth as any) % 2 ? 0 : 0.5),
             styledMode = renderer.styledMode;
@@ -411,6 +421,9 @@ class BubbleLegendItem {
             options.connectorDistance = 0;
             (range.labelAttribs as any).align = 'center';
         }
+
+        const labelY = posY + (options.labels as any).y,
+            labelX = posX + connectorLength + (options.labels as any).x;
 
         // Render bubble symbol
         symbols.bubbleItems.push(
@@ -465,7 +478,11 @@ class BubbleLegendItem {
 
         // Render label
         const label = renderer
-            .text(this.formatLabel(range))
+            .text(
+                this.formatLabel(range),
+                labelX,
+                labelY + labelMovement
+            )
             .attr(
                 (styledMode ? {} : range.labelAttribs)
             )
@@ -477,19 +494,13 @@ class BubbleLegendItem {
                 this.legendItem.symbol
             );
 
-        // Now that the label is added we can read the bounding box and
-        // vertically align
-        const position = {
-            x: posX + connectorLength + (options.labels as any).x,
-            y: posY + (options.labels as any).y + label.getBBox().height * 0.4
-        };
-
-        label.attr(position);
-
         labels.push(label);
         // To enable default 'hideOverlappingLabels' method
         label.placed = true;
-        label.alignAttr = position;
+        label.alignAttr = {
+            x: labelX,
+            y: labelY + labelMovement
+        };
     }
 
     /**
@@ -643,6 +654,7 @@ class BubbleLegendItem {
      */
     public predictBubbleSizes(): [number, number] {
         const chart = this.chart,
+            fontMetrics = this.fontMetrics,
             legendOptions = chart.legend.options,
             floating = legendOptions.floating,
             horizontal = legendOptions.layout === 'horizontal',
@@ -666,8 +678,8 @@ class BubbleLegendItem {
         } else {
             maxSize = parseFloat(maxSize as any);
 
-            calculatedSize = ((plotSize + lastLineHeight) * maxSize / 100) /
-                (maxSize / 100 + 1);
+            calculatedSize = ((plotSize + lastLineHeight -
+                fontMetrics.h / 2) * maxSize / 100) / (maxSize / 100 + 1);
 
             // Get maxPxSize from bubble series if calculated bubble legend
             // size will not affect to bubbles series.

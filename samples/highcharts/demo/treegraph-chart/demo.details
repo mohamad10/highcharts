@@ -3,8 +3,7 @@ name: Treegraph chart
 authors:
   - Torstein Hønsi
 js_wrap: b
-new_until: 2023-06-30
-use_png_thumbnail: true
+new_until: 2023-03-31
 tags:
   - Highcharts demo
 categories:

@@ -51,6 +51,11 @@
                 joinBy: ['iso-a2', 'code'],
                 name: 'Population density',
                 pointer: 'cursor',
+                states: {
+                    hover: {
+                        color: '#a4edba'
+                    }
+                },
                 tooltip: {
                     valueSuffix: '/km²'
                 }

@@ -33,9 +33,9 @@ import type Row from '../Layout/Row';
 import type Component from '../Components/Component.js';
 
 import ComponentRegistry from '../Components/ComponentRegistry.js';
-import Globals from '../Globals.js';
 import U from '../../Core/Utilities.js';
 const { merge, addEvent, fireEvent } = U;
+import Globals from '../Globals.js';
 
 /* *
  *
@@ -63,15 +63,13 @@ namespace Bindings {
      *
      * */
 
-    function getGUIElement(
-        idOrElement: string
-    ): (GUIElement|undefined) {
+    function getGUIElement(idOrElement: string): GUIElement|undefined {
         const container = typeof idOrElement === 'string' ?
             document.getElementById(idOrElement) : idOrElement;
 
         let guiElement;
 
-        if (container !== null) {
+        if (container instanceof HTMLElement) {
             fireEvent(container, 'bindedGUIElement', {}, function (
                 e: GUIElement.BindedGUIElementEvent
             ): void {
@@ -85,7 +83,7 @@ namespace Bindings {
     export function addComponent(
         options: Partial<Component.ComponentOptions>,
         cell?: Cell
-    ): (Component|undefined) {
+    ):(Component|undefined) {
         // TODO: Check if there are states in the options, and if so, add them
         const optionsStates = (options as any).states;
         const optionsEvents = options.events;
@@ -166,7 +164,7 @@ namespace Bindings {
     /** @internal */
     export function componentFromJSON(
         json: Component.JSON,
-        cellContainer: (HTMLElement|undefined) // @todo
+        cellContainer: HTMLElement|undefined
     ): (Component|undefined) {
         let componentClass = ComponentRegistry.getComponent(
             json.$class as keyof ComponentTypeRegistry
@@ -184,9 +182,7 @@ namespace Bindings {
         return component;
     }
 
-    export function getCell(
-        idOrElement: string
-    ): (Cell|undefined) {
+    export function getCell(idOrElement: string): Cell|undefined {
         const cell = getGUIElement(idOrElement);
 
         if (!(cell && cell.getType() === 'cell')) {
@@ -196,9 +192,7 @@ namespace Bindings {
         return (cell as Cell);
     }
 
-    export function getRow(
-        idOrElement: string
-    ): (Row|undefined) {
+    export function getRow(idOrElement: string): Row|undefined {
         const row = getGUIElement(idOrElement);
 
         if (!(row && row.getType() === 'row')) {
@@ -208,9 +202,7 @@ namespace Bindings {
         return (row as Row);
     }
 
-    export function getLayout(
-        idOrElement: string
-    ): (Layout|undefined) {
+    export function getLayout(idOrElement: string): Layout|undefined {
         const layout = getGUIElement(idOrElement);
 
         if (!(layout && layout.getType() === 'layout')) {

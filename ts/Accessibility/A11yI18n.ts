@@ -408,6 +408,8 @@ namespace A11yI18nComposition {
     }
 
     /**
+     * String trim that works for IE6-8 as well.
+     *
      * @private
      * @function stringTrim
      *

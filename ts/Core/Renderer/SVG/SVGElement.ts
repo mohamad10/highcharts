@@ -66,12 +66,13 @@ const {
     fireEvent,
     isArray,
     isFunction,
-    isObject,
+    isNumber,
     isString,
     merge,
     objectEach,
     pick,
     pInt,
+    removeEvent,
     syncTimeout,
     uniqueKey
 } = U;
@@ -134,22 +135,6 @@ class SVGElement implements SVGElementLike {
      *
      * */
 
-    // Custom attributes used for symbols, these should be filtered out when
-    // setting SVGElement attributes (#9375).
-    public static symbolCustomAttribs: Array<string> = [
-        'anchorX',
-        'anchorY',
-        'clockwise',
-        'end',
-        'height',
-        'innerR',
-        'r',
-        'start',
-        'width',
-        'x',
-        'y'
-    ];
-
     public added?: boolean;
     // @todo public alignAttr?: SVGAttributes;
     public alignByTranslate?: boolean;
@@ -168,6 +153,7 @@ class SVGElement implements SVGElementLike {
     // @todo public height?: number;
     public inverted: undefined;
     public matrix?: Array<number>;
+    public oldShadowOptions?: ShadowOptionsObject;
     public onEvents: Record<string, Function> = {};
     public opacity = 1; // Default base for animation
     // @todo public options?: AnyRecord;
@@ -182,12 +168,28 @@ class SVGElement implements SVGElementLike {
     public rotationOriginY?: number;
     public scaleX?: number;
     public scaleY?: number;
+    public shadows?: Array<SVGDOMElement>;
     public stops?: Array<SVGElement>;
     public stroke?: ColorType;
     // @todo public 'stroke-width'?: number;
     public styledMode?: boolean;
     public styles?: CSSObject;
     public SVG_NS = SVG_NS;
+    // Custom attributes used for symbols, these should be filtered out when
+    // setting SVGElement attributes (#9375).
+    public symbolCustomAttribs: Array<string> = [
+        'x',
+        'y',
+        'width',
+        'height',
+        'r',
+        'start',
+        'end',
+        'innerR',
+        'anchorX',
+        'anchorY',
+        'rounded'
+    ];
     public symbolName?: string;
     public text?: SVGElement;
     public textStr?: string;
@@ -529,7 +531,7 @@ class SVGElement implements SVGElementLike {
 
         // When the page is hidden save resources in the background by not
         // running animation at all (#9749).
-        if (doc.hidden) {
+        if (pick(doc.hidden, doc.msHidden, doc.webkitHidden, false)) {
             animOptions.duration = 0;
         }
 
@@ -756,7 +758,7 @@ class SVGElement implements SVGElementLike {
         continueAnimation?: boolean
     ): (number|string|this) {
         const element = this.element,
-            symbolCustomAttribs = SVGElement.symbolCustomAttribs;
+            symbolCustomAttribs = this.symbolCustomAttribs;
 
         let key,
             hasSetSymbolSize: boolean,
@@ -819,6 +821,16 @@ class SVGElement implements SVGElementLike {
                         (this as AnyRecord)._defaultSetter
                     );
                     setter.call(this, val, key, element);
+
+                    // Let the shadow follow the main element
+                    if (
+                        !this.styledMode &&
+                        this.shadows &&
+                        /^(width|height|visibility|x|y|d|transform|cx|cy|r)$/
+                            .test(key)
+                    ) {
+                        this.updateShadows(key, val, setter);
+                    }
                 }
             }, this);
 
@@ -1079,7 +1091,6 @@ class SVGElement implements SVGElementLike {
                 }
             });
         }
-
         if (hasNew) {
 
             // Merge the new styles with the old ones
@@ -1128,19 +1139,19 @@ class SVGElement implements SVGElementLike {
                 );
             }
             css(elem, stylesToApply);
-        }
 
-        if (this.added) {
+            if (this.added) {
 
-            // Rebuild text after added. Cache mechanisms in the buildText will
-            // prevent building if there are no significant changes.
-            if (this.element.nodeName === 'text') {
-                this.renderer.buildText(this);
-            }
+                // Rebuild text after added. Cache mechanisms in the buildText
+                // will prevent building if there are no significant changes.
+                if (this.element.nodeName === 'text') {
+                    this.renderer.buildText(this);
+                }
 
-            // Apply text outline after added
-            if (styles.textOutline) {
-                this.applyTextOutline(styles.textOutline);
+                // Apply text outline after added
+                if (styles.textOutline) {
+                    this.applyTextOutline(styles.textOutline);
+                }
             }
         }
 
@@ -1196,6 +1207,7 @@ class SVGElement implements SVGElementLike {
             ownerSVGElement = (element as SVGDOMElement).ownerSVGElement;
 
         let parentToClean: (SVGElement|undefined) = (
+                renderer.isSVG &&
                 element.nodeName === 'SPAN' &&
                 wrapper.parentGroup ||
                 void 0
@@ -1238,6 +1250,10 @@ class SVGElement implements SVGElementLike {
         // remove element
         wrapper.safeRemoveChild(element);
 
+        if (!renderer.styledMode) {
+            wrapper.destroyShadows();
+        }
+
         // In case of useHTML, clean up empty containers emulating SVG groups
         // (#1960, #2393, #2697).
         while (
@@ -1272,6 +1288,22 @@ class SVGElement implements SVGElementLike {
         });
 
         return;
+    }
+
+    /**
+     * Destroy shadows on the element.
+     *
+     * @private
+     * @function Highcharts.SVGElement#destroyShadows
+     *
+     */
+    public destroyShadows(): void {
+        (this.shadows || []).forEach(function (
+            shadow: DOMElementType
+        ): void {
+            this.safeRemoveChild(shadow);
+        }, this);
+        this.shadows = void 0;
     }
 
     /**
@@ -1428,9 +1460,8 @@ class SVGElement implements SVGElementLike {
             // Properties that affect bounding box
             cacheKey += [
                 '',
-                renderer.rootFontSize,
-                fontSize,
                 rotation,
+                fontSize,
                 wrapper.textWidth, // #7874, also useHTML
                 alignValue,
                 styles && styles.textOverflow, // #5968
@@ -1498,7 +1529,8 @@ class SVGElement implements SVGElementLike {
                     bBox = { x: 0, y: 0, width: 0, height: 0 };
                 }
 
-            // useHTML within SVG
+
+            // VML Renderer or useHTML within SVG
             } else {
 
                 bBox = wrapper.htmlGetBBox();
@@ -1507,83 +1539,85 @@ class SVGElement implements SVGElementLike {
 
             // True SVG elements as well as HTML elements in modern browsers
             // using the .useHTML option need to compensated for rotation
-            width = bBox.width;
-            height = bBox.height;
+            if (renderer.isSVG) {
+                width = bBox.width;
+                height = bBox.height;
 
-            // Workaround for wrong bounding box in IE, Edge and Chrome on
-            // Windows. With Highcharts' default font, IE and Edge report
-            // a box height of 16.899 and Chrome rounds it to 17. If this
-            // stands uncorrected, it results in more padding added below
-            // the text than above when adding a label border or background.
-            // Also vertical positioning is affected.
-            // https://jsfiddle.net/highcharts/em37nvuj/
-            // (#1101, #1505, #1669, #2568, #6213).
-            if (isSVG) {
-                bBox.height = height = (
-                    ({
-                        '11px,17': 14,
-                        '13px,20': 16
-                    } as Record<string, number>)[
-                        `${fontSize || ''},${Math.round(height)}`
-                    ] ||
-                    height
-                );
+                // Workaround for wrong bounding box in IE, Edge and Chrome on
+                // Windows. With Highcharts' default font, IE and Edge report
+                // a box height of 16.899 and Chrome rounds it to 17. If this
+                // stands uncorrected, it results in more padding added below
+                // the text than above when adding a label border or background.
+                // Also vertical positioning is affected.
+                // https://jsfiddle.net/highcharts/em37nvuj/
+                // (#1101, #1505, #1669, #2568, #6213).
+                if (isSVG) {
+                    bBox.height = height = (
+                        ({
+                            '11px,17': 14,
+                            '13px,20': 16
+                        } as Record<string, number>)[
+                            `${fontSize || ''},${Math.round(height)}`
+                        ] ||
+                        height
+                    );
+                }
+
+                // Adjust for rotated text
+                if (rotation) {
+
+                    const baseline = Number(
+                            element.getAttribute('y') || 0
+                        ) - bBox.y,
+                        alignFactor = ({
+                            'right': 1,
+                            'center': 0.5
+                        } as Record<string, number>)[alignValue || 0] || 0,
+                        rad = rotation * deg2rad,
+                        rad90 = (rotation - 90) * deg2rad,
+                        wCosRad = width * Math.cos(rad),
+                        wSinRad = width * Math.sin(rad),
+                        cosRad90 = Math.cos(rad90),
+                        sinRad90 = Math.sin(rad90),
+
+                        // Find the starting point on the left side baseline of
+                        // the text
+                        pX = bBox.x + alignFactor * (width - wCosRad),
+                        pY = bBox.y + baseline - alignFactor * wSinRad,
+
+                        // Find all corners
+                        aX = pX + baseline * cosRad90,
+                        bX = aX + wCosRad,
+                        cX = bX - height * cosRad90,
+                        dX = cX - wCosRad,
+
+                        aY = pY + baseline * sinRad90,
+                        bY = aY + wSinRad,
+                        cY = bY - height * sinRad90,
+                        dY = cY - wSinRad;
+
+                    // Deduct the bounding box from the corners
+                    bBox.x = Math.min(aX, bX, cX, dX);
+                    bBox.y = Math.min(aY, bY, cY, dY);
+                    bBox.width = Math.max(aX, bX, cX, dX) - bBox.x;
+                    bBox.height = Math.max(aY, bY, cY, dY) - bBox.y;
+                }
             }
 
-            // Adjust for rotated text
-            if (rotation) {
+            // Cache it. When loading a chart in a hidden iframe in Firefox and
+            // IE/Edge, the bounding box height is 0, so don't cache it (#5620).
+            if (cacheKey && (textStr === '' || bBox.height > 0)) {
 
-                const baseline = Number(
-                        element.getAttribute('y') || 0
-                    ) - bBox.y,
-                    alignFactor = ({
-                        'right': 1,
-                        'center': 0.5
-                    } as Record<string, number>)[alignValue || 0] || 0,
-                    rad = rotation * deg2rad,
-                    rad90 = (rotation - 90) * deg2rad,
-                    wCosRad = width * Math.cos(rad),
-                    wSinRad = width * Math.sin(rad),
-                    cosRad90 = Math.cos(rad90),
-                    sinRad90 = Math.sin(rad90),
+                // Rotate (#4681)
+                while (cacheKeys.length > 250) {
+                    delete cache[cacheKeys.shift() as any];
+                }
 
-                    // Find the starting point on the left side baseline of
-                    // the text
-                    pX = bBox.x + alignFactor * (width - wCosRad),
-                    pY = bBox.y + baseline - alignFactor * wSinRad,
-
-                    // Find all corners
-                    aX = pX + baseline * cosRad90,
-                    bX = aX + wCosRad,
-                    cX = bX - height * cosRad90,
-                    dX = cX - wCosRad,
-
-                    aY = pY + baseline * sinRad90,
-                    bY = aY + wSinRad,
-                    cY = bY - height * sinRad90,
-                    dY = cY - wSinRad;
-
-                // Deduct the bounding box from the corners
-                bBox.x = Math.min(aX, bX, cX, dX);
-                bBox.y = Math.min(aY, bY, cY, dY);
-                bBox.width = Math.max(aX, bX, cX, dX) - bBox.x;
-                bBox.height = Math.max(aY, bY, cY, dY) - bBox.y;
+                if (!cache[cacheKey]) {
+                    cacheKeys.push(cacheKey);
+                }
+                cache[cacheKey] = bBox;
             }
-        }
-
-        // Cache it. When loading a chart in a hidden iframe in Firefox and
-        // IE/Edge, the bounding box height is 0, so don't cache it (#5620).
-        if (cacheKey && (textStr === '' || bBox.height > 0)) {
-
-            // Rotate (#4681)
-            while (cacheKeys.length > 250) {
-                delete cache[cacheKeys.shift() as any];
-            }
-
-            if (!cache[cacheKey]) {
-                cacheKeys.push(cacheKey);
-            }
-            cache[cacheKey] = bBox;
         }
         return bBox;
     }
@@ -1948,8 +1982,9 @@ class SVGElement implements SVGElementLike {
     }
 
     /**
-     * Add a shadow to the element. In styled mode, this method is not used,
-     * instead use `defs` and filters.
+     * Add a shadow to the element. Must be called after the element is added to
+     * the DOM. In styled mode, this method is not used, instead use `defs` and
+     * filters.
      *
      * @example
      * renderer.rect(10, 100, 100, 100)
@@ -1958,27 +1993,125 @@ class SVGElement implements SVGElementLike {
      *
      * @function Highcharts.SVGElement#shadow
      *
-     * @param {boolean|Highcharts.ShadowOptionsObject} [shadowOptions] The
-     *        shadow options. If `true`, the default options are applied. If
+     * @param {boolean|Highcharts.ShadowOptionsObject} [shadowOptions]
+     *        The shadow options. If `true`, the default options are applied. If
      *        `false`, the current shadow will be removed.
      *
-     * @return {Highcharts.SVGElement} Returns the SVGElement for chaining.
+     * @param {Highcharts.SVGElement} [group]
+     *        The SVG group element where the shadows will be applied. The
+     *        default is to add it to the same parent as the current element.
+     *        Internally, this is ised for pie slices, where all the shadows are
+     *        added to an element behind all the slices.
+     *
+     * @param {boolean} [cutOff]
+     *        Used internally for column shadows.
+     *
+     * @return {Highcharts.SVGElement}
+     *         Returns the SVGElement for chaining.
      */
     public shadow(
-        shadowOptions?: (boolean|Partial<ShadowOptionsObject>)
+        shadowOptions?: (boolean|Partial<ShadowOptionsObject>),
+        group?: SVGElement,
+        cutOff?: boolean
     ): this {
-        const { renderer } = this,
-            options = merge(this.parentGroup?.rotation === 90 ? {
-                offsetX: -1,
-                offsetY: -1
-            } : {}, isObject(shadowOptions) ? shadowOptions : {}),
-            id = renderer.shadowDefinition(options);
+        const shadows = [],
+            {
+                element,
+                oldShadowOptions,
+                parentGroup
+            } = this,
+            parentInverted = parentGroup && parentGroup.rotation === 90,
+            defaultShadowOptions: ShadowOptionsObject = {
+                color: Palette.neutralColor100,
+                offsetX: parentInverted ? -1 : 1,
+                offsetY: parentInverted ? -1 : 1,
+                opacity: 0.15,
+                width: 3
+            };
 
-        return this.attr({
-            filter: shadowOptions ?
-                `url(${renderer.url}#${id})` :
-                'none'
-        });
+        let i,
+            shadow: SVGDOMElement,
+            strokeWidth,
+            shadowElementOpacity,
+            update = false,
+            // compensate for inverted plot area
+            transform,
+            options: ShadowOptionsObject|undefined;
+
+        if (shadowOptions === true) {
+            options = defaultShadowOptions;
+        } else if (typeof shadowOptions === 'object') {
+            options = extend(defaultShadowOptions, shadowOptions);
+        }
+
+        // Update shadow when options change (#12091).
+        if (options) {
+            // Go over each key to look for change
+            if (options && oldShadowOptions) {
+                objectEach(options, (value, key): void => {
+                    if (value !== (oldShadowOptions as any)[key]) {
+                        update = true;
+                    }
+                });
+            }
+
+            if (update) {
+                this.destroyShadows();
+            }
+
+            this.oldShadowOptions = options;
+        }
+
+        if (!options) {
+            this.destroyShadows();
+
+        } else if (!this.shadows) {
+            shadowElementOpacity = options.opacity / options.width;
+            transform = parentInverted ?
+                `translate(${options.offsetY}, ${options.offsetX})` :
+                `translate(${options.offsetX}, ${options.offsetY})`;
+            for (i = 1; i <= options.width; i++) {
+                shadow = element.cloneNode(false) as any;
+                strokeWidth = (options.width * 2) + 1 - (2 * i);
+                attr(shadow, {
+                    stroke: (
+                        (shadowOptions as any).color ||
+                        Palette.neutralColor100
+                    ),
+                    'stroke-opacity': shadowElementOpacity * i,
+                    'stroke-width': strokeWidth,
+                    transform,
+                    fill: 'none'
+                });
+                shadow.setAttribute(
+                    'class',
+                    (shadow.getAttribute('class') || '') + ' highcharts-shadow'
+                );
+                if (cutOff) {
+                    attr(
+                        shadow,
+                        'height',
+                        Math.max(
+                            (attr(shadow, 'height') as any) - strokeWidth,
+                            0
+                        )
+                    );
+                    shadow.cutHeight = strokeWidth;
+                }
+
+                if (group) {
+                    group.element.appendChild(shadow);
+                } else if (element.parentNode) {
+                    element.parentNode.insertBefore(shadow, element);
+                }
+
+                shadows.push(shadow);
+            }
+
+            this.shadows = shadows;
+        }
+
+        return this;
     }
 
     /**
@@ -2085,7 +2218,19 @@ class SVGElement implements SVGElementLike {
     public symbolAttr(hash: SVGAttributes): void {
         const wrapper = this as AnyRecord;
 
-        SVGElement.symbolCustomAttribs.forEach(function (key: string): void {
+        [
+            'x',
+            'y',
+            'r',
+            'start',
+            'end',
+            'width',
+            'height',
+            'innerR',
+            'anchorX',
+            'anchorY',
+            'clockwise'
+        ].forEach(function (key: string): void {
             wrapper[key] = pick((hash as any)[key], wrapper[key]);
         });
 
@@ -2187,6 +2332,45 @@ class SVGElement implements SVGElementLike {
         }) as any;
     }
 
+    /**
+     * Update the shadow elements with new attributes.
+     *
+     * @private
+     * @function Highcharts.SVGElement#updateShadows
+     *
+     * @param {string} key
+     * The attribute name.
+     *
+     * @param {number} value
+     * The value of the attribute.
+     *
+     * @param {Function} setter
+     * The setter function, inherited from the parent wrapper.
+     */
+    public updateShadows(
+        key: string,
+        value: number,
+        setter: Function
+    ): void {
+        const shadows = this.shadows;
+
+        if (shadows) {
+            let i = shadows.length;
+            while (i--) {
+                setter.call(
+                    shadows[i],
+                    key === 'height' ?
+                        Math.max(
+                            value - (shadows[i].cutHeight || 0),
+                            0
+                        ) :
+                        key === 'd' ? this.d : value,
+                    key,
+                    shadows[i]
+                );
+            }
+        }
+    }
 
     /**
      * Update the transform attribute based on internal properties. Deals with
@@ -2361,7 +2545,7 @@ class SVGElement implements SVGElementLike {
                     ) {
                         parentNode.insertBefore(
                             element,
-                            childNodes[i + 1]
+                            childNodes[i + 1] || null // null for oldIE export
                         );
                         inserted = true;
                     }
@@ -2371,7 +2555,7 @@ class SVGElement implements SVGElementLike {
             if (!inserted) {
                 parentNode.insertBefore(
                     element,
-                    childNodes[svgParent ? 3 : 0]
+                    childNodes[svgParent ? 3 : 0] || null // null for oldIE
                 );
                 inserted = true;
             }

@@ -126,8 +126,6 @@ const SeriesLabelDefaults: SeriesLabelOptions = {
      */
     style: {
         /** @internal */
-        fontSize: '0.8em',
-        /** @internal */
         fontWeight: 'bold'
     },
 

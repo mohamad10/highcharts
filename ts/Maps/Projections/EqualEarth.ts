@@ -20,7 +20,7 @@ const A1 = 1.340264,
     M = Math.sqrt(3) / 2.0,
     scale = 74.03120656864502;
 
-class EqualEarth implements ProjectionDefinition {
+export default class EqualEarth implements ProjectionDefinition {
 
     bounds = {
         x1: -200.37508342789243,
@@ -88,5 +88,3 @@ class EqualEarth implements ProjectionDefinition {
     }
 
 }
-
-export default EqualEarth;

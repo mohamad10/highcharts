@@ -258,7 +258,7 @@ const FlagsSeriesDefaults: FlagsSeriesOptions = {
      */
     style: {
         /** @ignore-option */
-        fontSize: '0.7em',
+        fontSize: '11px',
         /** @ignore-option */
         fontWeight: 'bold'
     }

@@ -1,4 +1,4 @@
-function drawChart(mapData, data) {
+function drawChart(data) {
     return Highcharts.mapChart('container', {
 
         chart: {
@@ -42,8 +42,8 @@ function drawChart(mapData, data) {
         },
 
         series: [{
-            data,
-            mapData,
+            data: data,
+            mapData: Highcharts.maps['custom/world'],
             joinBy: ['iso-a2', 'code'],
             name: 'Population density',
             tooltip: {
@@ -53,36 +53,30 @@ function drawChart(mapData, data) {
     });
 }
 
-(async () => {
-    const topology = await fetch(
-        'https://code.highcharts.com/mapdata/custom/world.topo.json'
-    ).then(response => response.json());
+// Load the data from a Google Spreadsheet
+// https://docs.google.com/spreadsheets/d/1eSoQeilFp0HI-qgqr9-oXdCh5G_trQR2HBaWt_U_n78
+Highcharts.data({
+    googleAPIKey: 'AIzaSyCQ0Jh8OFRShXam8adBbBcctlbeeA-qJOk',
+    googleSpreadsheetKey: '1eSoQeilFp0HI-qgqr9-oXdCh5G_trQR2HBaWt_U_n78',
 
-    // Load the data from a Google Spreadsheet
-    // https://docs.google.com/spreadsheets/d/1eSoQeilFp0HI-qgqr9-oXdCh5G_trQR2HBaWt_U_n78
-    Highcharts.data({
-        googleAPIKey: 'AIzaSyCQ0Jh8OFRShXam8adBbBcctlbeeA-qJOk',
-        googleSpreadsheetKey: '1eSoQeilFp0HI-qgqr9-oXdCh5G_trQR2HBaWt_U_n78',
+    // custom handler when the spreadsheet is parsed
+    parsed: function (columns) {
 
-        // custom handler when the spreadsheet is parsed
-        parsed: function (columns) {
-
-            // Read the columns into the data array
-            var data = [];
-            columns[0].forEach((code, i) => {
-                data.push({
-                    code: code.toUpperCase(),
-                    value: parseFloat(columns[2][i]),
-                    name: columns[1][i]
-                });
+        // Read the columns into the data array
+        var data = [];
+        columns[0].forEach((code, i) => {
+            data.push({
+                code: code.toUpperCase(),
+                value: parseFloat(columns[2][i]),
+                name: columns[1][i]
             });
+        });
 
-            drawChart(topology, data);
-        },
+        drawChart(data);
+    },
 
-        error: function (html, xhr) {
-            const chart = drawChart();
-            chart.showLoading('Error loading sample data: ' + xhr.status);
-        }
-    });
-})();
+    error: function (html, xhr) {
+        const chart = drawChart();
+        chart.showLoading('Error loading sample data: ' + xhr.status);
+    }
+});

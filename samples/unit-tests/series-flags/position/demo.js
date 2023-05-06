@@ -1,5 +1,5 @@
 QUnit.test('Flags on inverted chart', function (assert) {
-    var chart = new Highcharts.Chart('container', {
+    var chart = new Highcharts.chart('container', {
         chart: {
             inverted: true
         },

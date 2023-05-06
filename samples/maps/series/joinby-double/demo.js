@@ -45,7 +45,12 @@
             data: data,
             mapData: topology,
             joinBy: ['iso-a2', 'code'],
-            name: 'Random data'
+            name: 'Random data',
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            }
         }]
     });
 })();

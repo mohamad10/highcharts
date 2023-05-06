@@ -38,7 +38,7 @@ class VBPPoint extends SMAPoint {
         if (this.negativeGraphic) {
             this.negativeGraphic = (this.negativeGraphic as any).destroy();
         }
-        super.destroy.apply(this, arguments);
+        return super.destroy.apply(this, arguments);
     }
 }
 

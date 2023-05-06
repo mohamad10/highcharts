@@ -156,7 +156,8 @@ function onChartAfterSetChartSize(
     const legend = this.legend,
         navigator = this.navigator;
 
-    let legendOptions,
+    let scrollbarHeight,
+        legendOptions,
         xAxis,
         yAxis;
 
@@ -164,28 +165,24 @@ function onChartAfterSetChartSize(
         legendOptions = legend && legend.options;
         xAxis = navigator.xAxis;
         yAxis = navigator.yAxis;
-        const {
-            scrollbarHeight,
-            scrollButtonSize
-        } = navigator;
+        scrollbarHeight = navigator.scrollbarHeight;
 
         // Compute the top position
         if (this.inverted) {
             navigator.left = navigator.opposite ?
-                this.chartWidth - scrollbarHeight -
-                    navigator.height :
-                this.spacing[3] + scrollbarHeight;
-            navigator.top = this.plotTop + scrollButtonSize;
+                this.chartWidth - (scrollbarHeight as any) -
+                navigator.height :
+                this.spacing[3] + (scrollbarHeight as any);
+            navigator.top = this.plotTop + (scrollbarHeight as any);
         } else {
             navigator.left = pick(
                 xAxis.left,
-                this.plotLeft + scrollButtonSize
+                this.plotLeft + (scrollbarHeight as any)
             );
             navigator.top = (navigator.navigatorOptions.top as any) ||
                 this.chartHeight -
                 navigator.height -
-                scrollbarHeight -
-                (this.scrollbar?.options.margin || 0) -
+                (scrollbarHeight as any) -
                 this.spacing[2] -
                 (
                     this.rangeSelector && this.extraBottomMargin ?

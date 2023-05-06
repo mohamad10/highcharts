@@ -19,11 +19,11 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type DataConnector from '../../Data/Connectors/DataConnector';
+import type Serializable from '../Serializable';
 
-import CSVConnector from '../../Data/Connectors/CSVConnector.js';
 import DataTableHelper from './DataTableHelper.js';
-import Serializable from '../Serializable.js';
+import CSVConnector from '../../Data/Connectors/CSVConnector.js';
 import U from '../../Core/Utilities.js';
 const { merge } = U;
 
@@ -45,7 +45,12 @@ const { merge } = U;
 function fromJSON(
     json: CSVConnectorHelper.JSON
 ): CSVConnector {
-    return new CSVConnector(json.options);
+    const table = DataTableHelper.fromJSON(json.table),
+        connector = new CSVConnector(table, json.options);
+
+    merge(true, connector.metadata, json.metadata);
+
+    return connector;
 }
 
 /**
@@ -76,13 +81,11 @@ function jsonSupportFor(
 function toJSON(
     obj: CSVConnector
 ): CSVConnectorHelper.JSON {
-    const options = merge(obj.options) as CSVConnectorHelper.OptionsJSON;
-
-    options.dataTable = DataTableHelper.toJSON(obj.table);
-
     return {
         $class: 'Data.CSVConnector',
-        options
+        metadata: (obj.metadata),
+        options: (obj.options),
+        table: DataTableHelper.toJSON(obj.table)
     };
 }
 
@@ -101,16 +104,16 @@ namespace CSVConnectorHelper {
      * */
 
     export interface JSON extends Serializable.JSON<'Data.CSVConnector'> {
-        options: OptionsJSON;
+        metadata: DataConnector.Metadata;
+        options: CSVConnector.Options;
+        table: DataTableHelper.JSON;
     }
-
-    export type OptionsJSON = (JSON.Object&CSVConnector.Options);
 
 }
 
 /* *
  *
- *  Registry
+ *  Default Export
  *
  * */
 
@@ -120,13 +123,5 @@ const CSVConnectorHelper: Serializable.Helper<CSVConnector, CSVConnectorHelper.J
     jsonSupportFor,
     toJSON
 };
-
-Serializable.registerHelper(CSVConnectorHelper);
-
-/* *
- *
- *  Default Export
- *
- * */
 
 export default CSVConnectorHelper;

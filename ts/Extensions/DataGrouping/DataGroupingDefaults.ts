@@ -39,34 +39,34 @@ const common = {
     // dealing with a range
     dateTimeLabelFormats: {
         millisecond: [
-            '%A, %e %b, %H:%M:%S.%L',
-            '%A, %e %b, %H:%M:%S.%L',
+            '%A, %b %e, %H:%M:%S.%L',
+            '%A, %b %e, %H:%M:%S.%L',
             '-%H:%M:%S.%L'
         ],
         second: [
-            '%A, %e %b, %H:%M:%S',
-            '%A, %e %b, %H:%M:%S',
+            '%A, %b %e, %H:%M:%S',
+            '%A, %b %e, %H:%M:%S',
             '-%H:%M:%S'
         ],
         minute: [
-            '%A, %e %b, %H:%M',
-            '%A, %e %b, %H:%M',
+            '%A, %b %e, %H:%M',
+            '%A, %b %e, %H:%M',
             '-%H:%M'
         ],
         hour: [
-            '%A, %e %b, %H:%M',
-            '%A, %e %b, %H:%M',
+            '%A, %b %e, %H:%M',
+            '%A, %b %e, %H:%M',
             '-%H:%M'
         ],
         day: [
-            '%A, %e %b %Y',
-            '%A, %e %b',
-            '-%A, %e %b %Y'
+            '%A, %b %e, %Y',
+            '%A, %b %e',
+            '-%A, %b %e, %Y'
         ],
         week: [
-            'Week from %A, %e %b %Y',
-            '%A, %e %b',
-            '-%A, %e %b %Y'
+            'Week from %A, %b %e, %Y',
+            '%A, %b %e',
+            '-%A, %b %e, %Y'
         ],
         month: [
             '%B %Y',

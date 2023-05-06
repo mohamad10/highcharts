@@ -1,7 +1,0 @@
----
- name: Highcharts Sonification Instrument Editor
- authors:
-   - Øystein Moseng
- skipTest: true
- js_wrap: b
-...

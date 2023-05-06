@@ -17,12 +17,12 @@
  * */
 
 import type Chart from './Chart/Chart';
+import type Defaults from './Defaults';
 import type Point from './Series/Point';
 import type Pointer from './Pointer';
 import type PointerEvent from './PointerEvent';
 import type PositionObject from './Renderer/PositionObject';
 import type RectangleObject from './Renderer/RectangleObject';
-import type SizeObject from './Renderer/SizeObject';
 import type SVGAttributes from './Renderer/SVG/SVGAttributes';
 import type SVGElement from './Renderer/SVG/SVGElement';
 import type SVGRenderer from './Renderer/SVG/SVGRenderer';
@@ -182,6 +182,60 @@ class Tooltip {
      *  Functions
      *
      * */
+
+    /**
+     * In styled mode, apply the default filter for the tooltip drop-shadow. It
+     * needs to have an id specific to the chart, otherwise there will be issues
+     * when one tooltip adopts the filter of a different chart, specifically one
+     * where the container is hidden.
+     *
+     * @private
+     * @function Highcharts.Tooltip#applyFilter
+     */
+    public applyFilter(): void {
+
+        const chart = this.chart;
+
+        chart.renderer.definition({
+            tagName: 'filter',
+            attributes: {
+                id: 'drop-shadow-' + chart.index,
+                opacity: 0.5
+            },
+            children: [{
+                tagName: 'feGaussianBlur',
+                attributes: {
+                    'in': 'SourceAlpha',
+                    stdDeviation: 1
+                }
+            }, {
+                tagName: 'feOffset',
+                attributes: {
+                    dx: 1,
+                    dy: 1
+                }
+            }, {
+                tagName: 'feComponentTransfer',
+                children: [{
+                    tagName: 'feFuncA',
+                    attributes: {
+                        type: 'linear',
+                        slope: 0.3
+                    }
+                }]
+            }, {
+                tagName: 'feMerge',
+                children: [{
+                    tagName: 'feMergeNode'
+                }, {
+                    tagName: 'feMergeNode',
+                    attributes: {
+                        'in': 'SourceGraphic'
+                    }
+                }]
+            }]
+        });
+    }
 
     /**
      * Build the body (lines) of the tooltip by iterating over the items and
@@ -503,13 +557,23 @@ class Tooltip {
                     this.label
                         .attr({
                             fill: options.backgroundColor,
-                            'stroke-width': options.borderWidth || 0
+                            'stroke-width': options.borderWidth
                         })
                         // #2301, #2657
                         .css(options.style)
-                        .css({ pointerEvents });
+                        .css({ pointerEvents })
+                        .shadow(options.shadow);
                 }
             }
+
+            if (styledMode && options.shadow) {
+                // Apply the drop-shadow filter
+                this.applyFilter();
+                this.label.attr({
+                    filter: 'url(#drop-shadow-' + this.chart.index + ')'
+                });
+            }
+
             // Split tooltip use updateTooltipContainer to position the tooltip
             // container.
             if (tooltip.outside) {
@@ -531,41 +595,9 @@ class Tooltip {
 
             this.label
                 .attr({ zIndex: 8 })
-                .shadow(options.shadow)
                 .add();
         }
         return this.label;
-    }
-
-    /**
-     * Get the total area available area to place the tooltip
-     *
-     * @private
-     */
-    public getPlayingField(): SizeObject {
-        const { body, documentElement } = doc,
-            { chart, distance, outside } = this;
-        return {
-            width: outside ?
-                // Substract distance to prevent scrollbars
-                Math.max(
-                    body.scrollWidth,
-                    documentElement.scrollWidth,
-                    body.offsetWidth,
-                    documentElement.offsetWidth,
-                    documentElement.clientWidth
-                ) - 2 * distance :
-                chart.chartWidth,
-            height: outside ?
-                Math.max(
-                    body.scrollHeight,
-                    documentElement.scrollHeight,
-                    body.offsetHeight,
-                    documentElement.offsetHeight,
-                    documentElement.clientHeight
-                ) :
-                chart.chartHeight
-        };
     }
 
     /**
@@ -598,9 +630,26 @@ class Tooltip {
             // Don't use h if chart isn't inverted (#7242) ???
             h = (chart.inverted && (point as any).h) || 0, // #4117 ???
             outside = this.outside,
-            playingField = this.getPlayingField(),
-            outerWidth = playingField.width,
-            outerHeight = playingField.height,
+            { body, documentElement } = doc,
+            outerWidth = outside ?
+                // substract distance to prevent scrollbars
+                Math.max(
+                    body.scrollWidth,
+                    documentElement.scrollWidth,
+                    body.offsetWidth,
+                    documentElement.offsetWidth,
+                    documentElement.clientWidth
+                ) - 2 * distance :
+                chart.chartWidth,
+            outerHeight = outside ?
+                Math.max(
+                    body.scrollHeight,
+                    documentElement.scrollHeight,
+                    body.offsetHeight,
+                    documentElement.offsetHeight,
+                    documentElement.clientHeight
+                ) :
+                chart.chartHeight,
             chartPosition = chart.pointer.getChartPosition(),
             scaleX = (val: number): number => ( // eslint-disable-line no-confusing-arrow
                 val * chartPosition.scaleX
@@ -1085,11 +1134,7 @@ class Tooltip {
                     // (#6659)
                     if (!options.style.width || styledMode) {
                         label.css({
-                            width: (
-                                this.outside ?
-                                    this.getPlayingField() :
-                                    chart.spacingBox
-                            ).width + 'px'
+                            width: chart.spacingBox.width + 'px'
                         });
                     }
 
@@ -1324,7 +1369,7 @@ class Tooltip {
 
                 if (!styledMode) {
                     attribs.fill = options.backgroundColor;
-                    attribs['stroke-width'] = options.borderWidth ?? 1;
+                    attribs['stroke-width'] = options.borderWidth;
                 }
                 tt = ren
                     .label(
@@ -1349,6 +1394,7 @@ class Tooltip {
             });
             if (!styledMode) {
                 tt.css(options.style)
+                    .shadow(options.shadow)
                     .attr({
                         stroke: (
                             options.borderColor ||
@@ -1586,7 +1632,7 @@ class Tooltip {
 
         if (!this.shouldStickOnContact()) {
             if (tooltip.tracker) {
-                tooltip.tracker = tooltip.tracker.destroy();
+                tooltip.tracker.destroy();
             }
             return;
         }
@@ -1655,7 +1701,7 @@ class Tooltip {
     public styledModeFormat(formatString: string): string {
         return formatString
             .replace(
-                'style="font-size: 0.8em"',
+                'style="font-size: 10px"',
                 'class="highcharts-header"'
             )
             .replace(
@@ -1780,7 +1826,7 @@ class Tooltip {
                 pos.y += top - distance;
             }
 
-            pad = (options.borderWidth || 0) + 2 * distance;
+            pad = options.borderWidth + 2 * distance;
 
             (this.renderer as any).setSize(
                 label.width + pad,

@@ -618,14 +618,13 @@ class SankeySeries extends ColumnSeries {
         const translationFactor = this.translationFactor,
             chart = this.chart,
             options = this.options,
-            { borderRadius, borderWidth = 0 } = options,
             sum = node.getSum(),
             nodeHeight = Math.max(
                 Math.round(sum * translationFactor),
                 this.options.minLinkWidth as any
             ),
             nodeWidth = Math.round(this.nodeWidth),
-            crisp = Math.round(borderWidth) % 2 / 2,
+            crisp = Math.round(options.borderWidth as any) % 2 / 2,
             nodeOffset = column.sankeyColumn.offset(node, translationFactor),
             fromNodeTop = Math.floor(pick(
                 (nodeOffset as any).absoluteTop,
@@ -636,7 +635,7 @@ class SankeySeries extends ColumnSeries {
             )) + crisp,
             left = Math.floor(
                 this.colDistance * (node.column as any) +
-                borderWidth / 2
+                (options.borderWidth as any) / 2
             ) + relativeLength(node.options.offsetHorizontal || 0, nodeWidth) +
             crisp,
             nodeLeft = chart.inverted ?
@@ -645,8 +644,8 @@ class SankeySeries extends ColumnSeries {
         node.sum = sum;
         // If node sum is 0, don't render the rect #12453
         if (sum) {
-            // Draw the node
-            node.shapeType = 'roundedRect';
+        // Draw the node
+            node.shapeType = 'rect';
 
             node.nodeX = nodeLeft;
             node.nodeY = fromNodeTop;
@@ -655,12 +654,6 @@ class SankeySeries extends ColumnSeries {
                 y = fromNodeTop,
                 width = node.options.width || options.width || nodeWidth,
                 height = node.options.height || options.height || nodeHeight;
-
-            const r = relativeLength((
-                typeof borderRadius === 'object' ?
-                    borderRadius.radius :
-                    borderRadius || 0
-            ), width);
 
             if (chart.inverted) {
                 x = nodeLeft - nodeWidth;
@@ -693,7 +686,6 @@ class SankeySeries extends ColumnSeries {
                 y,
                 width,
                 height,
-                r,
                 display: node.hasShape() ? '' : 'none'
             };
         } else {

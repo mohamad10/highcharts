@@ -21,10 +21,13 @@ import type {
     PriceEnvelopesParamsOptions
 } from './PriceEnvelopesOptions';
 import type PriceEnvelopesPoint from './PriceEnvelopesPoint';
+import type SVGElement from '../../../Core/Renderer/SVG/SVGElement';
 
 import MultipleLinesComposition from '../MultipleLinesComposition.js';
 import SeriesRegistry from '../../../Core/Series/SeriesRegistry.js';
-const { sma: SMAIndicator } = SeriesRegistry.seriesTypes;
+const {
+    sma: SMAIndicator
+} = SeriesRegistry.seriesTypes;
 import U from '../../../Core/Utilities.js';
 const {
     extend,
@@ -129,7 +132,7 @@ class PriceEnvelopesIndicator extends SMAIndicator {
          *      Background fill between lines.
          *
          * @type      {Highcharts.Color}
-         * @since 11.0.0
+         * @since     next
          * @apioption plotOptions.priceenvelopes.fillColor
          *
          */
@@ -152,7 +155,7 @@ class PriceEnvelopesIndicator extends SMAIndicator {
      * */
 
     public init(): void {
-        super.init.apply(this, arguments);
+        SeriesRegistry.seriesTypes.sma.prototype.init.apply(this, arguments);
 
         // Set default color for lines:
         this.options = merge({
@@ -173,7 +176,7 @@ class PriceEnvelopesIndicator extends SMAIndicator {
         series: TLinkedSeries,
         params: PriceEnvelopesParamsOptions
     ): (IndicatorValuesObject<TLinkedSeries>|undefined) {
-        const period = params.period,
+        let period = params.period,
             topPercent = params.topBand,
             botPercent = params.bottomBand,
             xVal: Array<number> = (series.xData as any),
@@ -182,13 +185,12 @@ class PriceEnvelopesIndicator extends SMAIndicator {
             // 0- date, 1-top line, 2-middle line, 3-bottom line
             PE: Array<Array<number>> = [],
             // middle line, top line and bottom line
-            xData: Array<number> = [],
-            yData: Array<Array<number>> = [];
-
-        let ML: number,
+            ML: number,
             TL: number,
             BL: number,
             date: number,
+            xData: Array<number> = [],
+            yData: Array<Array<number>> = [],
             slicedX: Array<number>,
             slicedY: Array<Array<number>>,
             point: IndicatorValuesObject<TLinkedSeries>,
@@ -207,13 +209,14 @@ class PriceEnvelopesIndicator extends SMAIndicator {
             slicedX = xVal.slice(i - period, i);
             slicedY = yVal.slice(i - period, i);
 
-            point = super.getValues(
+            point = (SeriesRegistry.seriesTypes.sma.prototype.getValues.call(
+                this,
                 {
                     xData: slicedX,
                     yData: slicedY
                 } as any,
                 params
-            ) as any;
+            ) as any);
 
             date = (point as any).xData[0];
             ML = (point as any).yData[0];
@@ -230,7 +233,6 @@ class PriceEnvelopesIndicator extends SMAIndicator {
             yData: yData
         } as IndicatorValuesObject<TLinkedSeries>;
     }
-
 }
 
 /* *

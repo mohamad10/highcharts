@@ -10,7 +10,6 @@
  *  - Sophie Bremer
  *
  * */
-
 /* *
  *
  *  Declarations

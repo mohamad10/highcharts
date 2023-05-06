@@ -28,6 +28,7 @@ export interface ZigzagOptions extends SMAOptions {
 }
 
 export interface ZigzagParamsOptions extends SMAParamsOptions {
+    // for inheritance
     lowIndex?: number;
     highIndex?: number;
     deviation?: number;

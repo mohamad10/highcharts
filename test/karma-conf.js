@@ -193,13 +193,19 @@ module.exports = function (config) {
 
     let frameworks = ['qunit'];
 
+    if (argv.oldie) {
+        frameworks = []; // Custom framework in test file
+    }
+
     // Browsers
     let browsers = argv.browsers ?
         argv.browsers.split(',') :
         // Use karma.defaultbrowser=FirefoxHeadless to bypass WebGL problems in
         // Chrome 109
         [getProperties()['karma.defaultbrowser'] || 'ChromeHeadless'];
-    if (argv.browsers === 'all') {
+    if (argv.oldie) {
+        browsers = ['Win.IE8'];
+    } else if (argv.browsers === 'all') {
         browsers = Object.keys(browserStackBrowsers);
     }
 
@@ -223,11 +229,16 @@ module.exports = function (config) {
 
     const needsTranspiling = browsers.some(browser => browser === 'Win.IE');
 
+    // The tests to run by default
+    const defaultTests = argv.oldie ?
+        ['unit-tests/oldie/*'] :
+        ['unit-tests/*/*'];
+
     const tests = (
             argv.tests ? argv.tests.split(',') :
             (
                 argv.testsAbsolutePath ? argv.testsAbsolutePath.split(',') :
-                ['unit-tests/*/*'] // The tests to run by default
+                defaultTests
             )
         )
         .filter(path => !!path)
@@ -235,6 +246,24 @@ module.exports = function (config) {
 
     // Get the files
     let files = require('./karma-files.json');
+    if (argv.oldie) {
+        files = files.filter(f =>
+            f.indexOf('vendor/jquery') !== 0 &&
+            f.indexOf('vendor/moment') !== 0 &&
+            f.indexOf('vendor/proj4') !== 0 &&
+            f.indexOf('vendor/rgbcolor') !== 0 &&
+            f.indexOf('node_modules/lolex') !== 0 &&
+            f.indexOf('topojson-client') === -1 &&
+
+            // Complains on chart.renderer.addPattern
+            f.indexOf('code/modules/pattern-fill.src.js') !== 0 &&
+            // Uses classList extensively
+            f.indexOf('code/modules/stock-tools.src.js') !== 0 &&
+            f.indexOf('code/dashboard.src.js') !== 0
+        );
+        files.splice(0, 0, 'code/modules/oldie-polyfills.src.js');
+        files.splice(2, 0, 'code/modules/oldie.src.js');
+    }
 
     let options = {
         basePath: '../', // Root relative to this file
@@ -283,7 +312,7 @@ module.exports = function (config) {
         ],
 
         // These ones fail
-        exclude: [
+        exclude: argv.oldie ? [] : [
             // Themes alter the whole default options structure. Set up a
             // separate test suite? Or perhaps somehow decouple the options so
             // they are not mutated for later tests?
@@ -333,6 +362,9 @@ module.exports = function (config) {
 
             // Failing on Edge only
             'samples/unit-tests/pointer/members/demo.js',
+
+            // Skip the special oldie tests (which don't run QUnit)
+            'samples/unit-tests/oldie/*/demo.js',
 
             // visual tests excluded for now due to failure
             'samples/highcharts/demo/funnel3d/demo.js',
@@ -541,7 +573,7 @@ module.exports = function (config) {
         options.browserDisconnectTimeout = 30000; // default 2000
     }
 
-    if (browsers.some(browser => /^(Mac|Win)\./.test(browser))) {
+    if (browsers.some(browser => /^(Mac|Win)\./.test(browser)) || argv.oldie) {
         let properties = getProperties();
 
         if (!properties['browserstack.username']) {
@@ -565,7 +597,17 @@ module.exports = function (config) {
             pollingTimeout: 5000, // to avoid rate limit errors with browserstack.
             'browserstack.timezone': argv.timezone || 'UTC'
         };
-        options.customLaunchers = browserStackBrowsers;
+        options.customLaunchers = argv.oldie ?
+            {
+                'Win.IE8': {
+                    base: 'BrowserStack',
+                    browser: 'ie',
+                    browser_version: '8.0',
+                    os: 'Windows',
+                    os_version: 'XP'
+                }
+            } :
+            browserStackBrowsers;
         options.logLevel = config.LOG_INFO;
 
         // to avoid DISCONNECTED messages when connecting to BrowserStack
@@ -579,9 +621,11 @@ module.exports = function (config) {
         options.plugins = [
             'karma-browserstack-launcher',
             'karma-sharding',
-            'karma-generic-preprocessor',
-            'karma-qunit'
+            'karma-generic-preprocessor'
         ];
+        if (!argv.oldie) {
+            options.plugins.push('karma-qunit');
+        }
 
         options.reporters = ['progress'];
 

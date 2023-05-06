@@ -39,11 +39,13 @@ const {
     hasTouch,
     noop
 } = H;
+import LegendSymbol from '../../Core/Legend/LegendSymbol.js';
 import Series from '../../Core/Series/Series.js';
 import SeriesRegistry from '../../Core/Series/SeriesRegistry.js';
 import U from '../../Core/Utilities.js';
 const {
     clamp,
+    css,
     defined,
     extend,
     fireEvent,
@@ -51,8 +53,7 @@ const {
     isNumber,
     merge,
     pick,
-    objectEach,
-    relativeLength
+    objectEach
 } = U;
 
 /* *
@@ -343,6 +344,10 @@ class ColumnSeries extends Series {
         let right,
             yCrisp = (borderWidth as any) % 2 ? 0.5 : 1;
 
+        if (chart.inverted && chart.renderer.isVML) {
+            yCrisp += 1;
+        }
+
         // Horizontal. We need to first compute the exact right edge, then
         // round it and compute the width from there.
         if (this.options.crisp) {
@@ -489,6 +494,8 @@ class ColumnSeries extends Series {
             xAxis = series.xAxis,
             yAxis = series.yAxis,
             threshold = options.threshold,
+            translatedThreshold = series.translatedThreshold =
+                yAxis.getThreshold(threshold as any),
             minPointLength = pick(options.minPointLength, 5),
             metrics = series.getColumnMetrics(),
             seriesPointWidth = metrics.width,
@@ -497,12 +504,10 @@ class ColumnSeries extends Series {
             dataMax = series.dataMax;
         // postprocessed for border width
         let seriesBarW = series.barW =
-                Math.max(seriesPointWidth, 1 + 2 * borderWidth),
-            translatedThreshold = series.translatedThreshold =
-                yAxis.getThreshold(threshold as any);
+            Math.max(seriesPointWidth, 1 + 2 * borderWidth);
 
         if (chart.inverted) {
-            translatedThreshold -= 0.5; // #3355
+            (translatedThreshold as any) -= 0.5; // #3355
         }
 
         // When the pointPadding is 0, we want the columns to be packed
@@ -526,8 +531,7 @@ class ColumnSeries extends Series {
                     point.plotY as any,
                     -safeDistance,
                     yAxis.len + safeDistance
-                ),
-                stackBox = point.stackBox;
+                );
             let up,
                 barY = Math.min(plotY, yBottom),
                 barH = Math.max(plotY, yBottom) - barY,
@@ -616,26 +620,19 @@ class ColumnSeries extends Series {
                     barH
                 ];
 
-            // Register shape type and arguments to be used in drawPoints. Allow
-            // `shapeType` defined on `pointClass` level.
-            point.shapeType = series.pointClass.prototype.shapeType ||
-                'roundedRect';
-            point.shapeArgs = series.crispCol(
-                barX,
-                // #3169, drilldown from null must have a position to work from.
-                // #6585, dataLabel should be placed on xAxis, not floating in
-                // the middle of the chart.
-                point.isNull ? translatedThreshold : barY,
-                barW,
-                point.isNull ? 0 : barH
+            // Register shape type and arguments to be used in drawPoints
+            // Allow shapeType defined on pointClass level
+            point.shapeType = series.pointClass.prototype.shapeType || 'rect';
+            point.shapeArgs = series.crispCol.apply(
+                series,
+                point.isNull ?
+                // #3169, drilldown from null must have a position to work
+                // from #6585, dataLabel should be placed on xAxis, not
+                // floating in the middle of the chart
+                    [barX, translatedThreshold as any, barW, 0] :
+                    [barX, barY, barW, barH]
             );
         });
-
-        // Fire a specific event after column translate. We could instead apply
-        // all the column logic in an `afterTranslate` event handler, but there
-        // are so many other series types that use the column translation, that
-        // it is more convenient to have a specific event for it.
-        fireEvent(this, 'afterColumnTranslate');
     }
 
     /**
@@ -803,6 +800,13 @@ class ColumnSeries extends Series {
                     );
                 }
 
+                // Border radius is not stylable (#6900)
+                if (options.borderRadius) {
+                    (graphic as any)[verb]({
+                        r: options.borderRadius
+                    });
+                }
+
                 // Presentational
                 if (!chart.styledMode) {
                     (graphic as any)[verb](series.pointAttribs(
@@ -810,7 +814,9 @@ class ColumnSeries extends Series {
                         (point.selected && 'select') as any
                     ))
                         .shadow(
-                            point.allowShadow !== false && options.shadow
+                            point.allowShadow !== false && options.shadow,
+                            null,
+                            options.stacking && !options.borderRadius
                         );
                 }
 
@@ -938,6 +944,21 @@ extend(ColumnSeries.prototype, {
     // When tooltip is not shared, this series (and derivatives) requires
     // direct touch/hover. KD-tree does not apply.
     directTouch: true,
+
+    /**
+     * Use a solid rectangle like the area series types
+     *
+     * @private
+     * @function Highcharts.seriesTypes.column#drawLegendSymbol
+     *
+     * @param {Highcharts.Legend} legend
+     *        The legend object
+     *
+     * @param {Highcharts.Series|Highcharts.Point} item
+     *        The series (this) or point
+     */
+    drawLegendSymbol: LegendSymbol.drawRectangle,
+
     getSymbol: noop,
 
     // use separate negative stacks, unlike area stacks where a negative

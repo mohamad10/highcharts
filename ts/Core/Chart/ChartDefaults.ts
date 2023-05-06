@@ -507,13 +507,6 @@ const ChartDefaults: ChartOptions = {
      * are required to style the chart. The default style sheet is
      * available from `https://code.highcharts.com/css/highcharts.css`.
      *
-     * [Read more in the docs](https://www.highcharts.com/docs/chart-design-and-style/style-by-css)
-     * on what classes and variables are available.
-     *
-     * @sample highcharts/css/colors
-     *         Color theming with CSS
-     * @sample highcharts/css/prefers-color-scheme
-     *         Dynamic theme based on system settings
      * @type       {boolean}
      * @default    false
      * @since      7.0
@@ -556,6 +549,18 @@ const ChartDefaults: ChartOptions = {
      * @since 10.1.0
      */
     allowMutatingData: true,
+
+    /**
+     * Alias of `type`.
+     *
+     * @sample {highcharts} highcharts/chart/defaultseriestype/
+     *         Bar
+     *
+     * @deprecated
+     *
+     * @product highcharts
+     */
+    defaultSeriesType: 'line',
 
     /**
      * If true, the axes will scale to the remaining visible series once
@@ -727,7 +732,7 @@ const ChartDefaults: ChartOptions = {
      * @sample {highmaps} maps/chart/plotborder/
      *         Plot border options
      *
-     * @type      {boolean|Highcharts.ShadowOptionsObject}
+     * @type      {boolean|Highcharts.CSSObject}
      * @default   false
      * @apioption chart.plotShadow
      */
@@ -808,20 +813,6 @@ const ChartDefaults: ChartOptions = {
      */
 
     /**
-     * Whether to apply a drop shadow to the global series group. This causes
-     * all the series to have the same shadow. Contrary to the `series.shadow`
-     * option, this prevents items from casting shadows on each other, like for
-     * others series in a stack. The shadow can be an object configuration
-     * containing `color`, `offsetX`, `offsetY`, `opacity` and `width`.
-     *
-     * @sample highcharts/chart/seriesgroupshadow/ Shadow
-     *
-     * @type      {boolean|Highcharts.ShadowOptionsObject}
-     * @default   false
-     * @apioption chart.shadow
-     */
-
-    /**
      * Whether to apply a drop shadow to the outer chart area. Requires
      * that backgroundColor be set. The shadow can be an object
      * configuration containing `color`, `offsetX`, `offsetY`, `opacity` and
@@ -834,7 +825,7 @@ const ChartDefaults: ChartOptions = {
      * @sample {highmaps} maps/chart/border/
      *         Chart border and shadow
      *
-     * @type      {boolean|Highcharts.ShadowOptionsObject}
+     * @type      {boolean|Highcharts.CSSObject}
      * @default   false
      * @apioption chart.shadow
      */
@@ -933,19 +924,16 @@ const ChartDefaults: ChartOptions = {
      */
 
     /**
-     * Additional CSS styles to apply inline to the container `div` and the root
-     * SVG.
-     *
-     * Since v11, the root font size is 1rem by default, and all child element
-     * are given a relative `em` font size by default. This allows implementers
-     * to control all the chart's font sizes by only setting the root level.
+     * Additional CSS styles to apply inline to the container `div`. Note
+     * that since the default font styles are applied in the renderer, it
+     * is ignorant of the individual chart options and must be set globally.
+     * Also note that changing the font size in the `chart.style` options only
+     * applies to those elements that do not have a specific `fontSize` setting.
      *
      * @see    In styled mode, general chart styles can be set with the
      *         `.highcharts-root` class.
      * @sample {highcharts} highcharts/chart/style-serif-font/
      *         Using a serif type font
-     * @sample {highcharts} highcharts/members/relative-font-size/
-     *         Relative font sizes
      * @sample {highcharts} highcharts/css/em/
      *         Styled mode with relative font sizes
      * @sample {highstock} stock/chart/style/
@@ -954,7 +942,7 @@ const ChartDefaults: ChartOptions = {
      *         Using a serif type font
      *
      * @type      {Highcharts.CSSObject}
-     * @default   {"fontFamily": Helvetica, Arial, sans-serif","fontSize":"1rem"}
+     * @default   {"fontFamily": "\"Lucida Grande\", \"Lucida Sans Unicode\", Verdana, Arial, Helvetica, sans-serif","fontSize":"12px"}
      * @apioption chart.style
      */
 
@@ -980,7 +968,6 @@ const ChartDefaults: ChartOptions = {
      * @since      2.1.0
      * @apioption  chart.type
      */
-    type: 'line',
 
     /**
      * Decides in what dimensions the user can zoom by dragging the mouse.

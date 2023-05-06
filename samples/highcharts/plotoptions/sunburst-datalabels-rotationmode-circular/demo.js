@@ -848,13 +848,3 @@ Highcharts.chart('container', {
         pointFormat: 'Arrivals to <b>{point.name}</b>: <b>{point.value}</b>'
     }
 });
-
-[...document.querySelectorAll('#button-row button')].forEach(button =>
-    button.addEventListener('click', e => {
-        Highcharts.charts[0].series[0].update({
-            dataLabels: {
-                rotationMode: e.target.innerText
-            }
-        });
-    })
-);

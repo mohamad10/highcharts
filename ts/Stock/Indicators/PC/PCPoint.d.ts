@@ -3,7 +3,6 @@
  *  License: www.highcharts.com/license
  *
  *  !!!!!!! SOURCE GETS TRANSPILED BY TYPESCRIPT. EDIT TS FILE ONLY. !!!!!!!
- *
  * */
 
 /* *
@@ -16,10 +15,10 @@ import PCIndicator from './PCIndicator';
 import type SMAPoint from '../SMA/SMAPoint';
 
 /* *
- *
- *  Class
- *
- * */
+*
+*  Class
+*
+* */
 
 declare class PCPoint extends SMAPoint {
     public middle?: number;
@@ -27,9 +26,9 @@ declare class PCPoint extends SMAPoint {
 }
 
 /* *
- *
- *  Default Export
- *
- * */
+*
+*  Default Export
+*
+* */
 
 export default PCPoint;

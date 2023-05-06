@@ -19,10 +19,10 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type CoreJSON from '../../Core/JSON';
+import type Serializable from '../Serializable';
 
 import DataTable from '../../Data/DataTable.js';
-import Serializable from '../Serializable.js';
 
 /* *
  *
@@ -73,30 +73,14 @@ function jsonSupportFor(
 function toJSON(
     obj: DataTable
 ): DataTableHelper.JSON {
-    const aliases = obj.getColumnAliases(),
-        aliasKeys = Object.keys(aliases),
-        json: DataTableHelper.JSON = {
-            $class: 'Data.DataTable',
-            columns: obj.getColumns()
-        };
-
-    // aliases
-
-    if (aliasKeys.length) {
-        const jsonAliases: JSON.Object = json.aliases = {};
-
-        for (let i = 0, iEnd = aliasKeys.length; i < iEnd; ++i) {
-            jsonAliases[aliasKeys[i]] = aliases[aliasKeys[i]];
-        }
-    }
-
-    // custom ID
+    const json: DataTableHelper.JSON = {
+        $class: 'Data.DataTable',
+        columns: obj.getColumns()
+    };
 
     if (!obj.autoId) {
         json.id = obj.id;
     }
-
-    // done
 
     return json;
 }
@@ -115,17 +99,21 @@ namespace DataTableHelper {
      *
      * */
 
-    export type ColumnJSON = JSON.Array<JSON.Primitive>;
+    export type ColumnJSON = CoreJSON.Array<CoreJSON.Primitive>;
 
-    export type JSON = (Serializable.JSON<'Data.DataTable'>&DataTable.Options);
+    export interface JSON extends Serializable.JSON<'Data.DataTable'> {
+        columns: CoreJSON.Object<ColumnJSON>;
+        id?: string;
+    }
 
 }
 
 /* *
  *
- *  Registry
+ *  Default Export
  *
  * */
+
 
 const DataTableHelper: Serializable.Helper<DataTable, DataTableHelper.JSON> = {
     $class: 'Data.DataTable',
@@ -133,13 +121,5 @@ const DataTableHelper: Serializable.Helper<DataTable, DataTableHelper.JSON> = {
     jsonSupportFor,
     toJSON
 };
-
-Serializable.registerHelper(DataTableHelper);
-
-/* *
- *
- *  Default Export
- *
- * */
 
 export default DataTableHelper;

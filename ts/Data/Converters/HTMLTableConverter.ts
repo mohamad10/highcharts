@@ -93,25 +93,30 @@ class HTMLTableConverter extends DataConverter {
      * */
 
     /**
-     * Constructs an instance of the HTMLTableConverter.
+     * Constructs an instance of the HTML table parser.
      *
-     * @param {HTMLTableConverter.UserOptions} [options]
-     * Options for the HTMLTableConverter.
+     * @param {HTMLTableConverter.OptionsType} [options]
+     * Options for the CSV parser.
+     *
+     * @param {HTMLElement|null} [tableElement]
+     * The HTML table to parse
      */
     constructor(
-        options?: HTMLTableConverter.UserOptions
+        options?: Partial<HTMLTableConverter.OptionsType>,
+        tableElement: (HTMLElement|null) = null
     ) {
-        const mergedOptions = merge(HTMLTableConverter.defaultOptions, options);
-
-        super(mergedOptions);
+        super();
 
         this.columns = [];
         this.headers = [];
-        this.options = mergedOptions;
+        this.options = merge(HTMLTableConverter.defaultOptions, options);
 
-        if (mergedOptions.tableElement) {
-            this.tableElement = mergedOptions.tableElement;
-            this.tableElementID = mergedOptions.tableElement.id;
+        if (tableElement) {
+            this.tableElement = tableElement;
+            this.tableElementID = tableElement.id;
+        } else if (options && options.tableHTML) {
+            this.tableElement = options.tableHTML;
+            this.tableElementID = options.tableHTML.id;
         }
     }
 
@@ -385,7 +390,7 @@ class HTMLTableConverter extends DataConverter {
     /**
      * Initiates the parsing of the HTML table
      *
-     * @param {HTMLTableConverter.UserOptions}[options]
+     * @param {HTMLTableConverter.OptionsType}[options]
      * Options for the parser
      *
      * @param {DataEvent.Detail} [eventDetail]
@@ -396,7 +401,7 @@ class HTMLTableConverter extends DataConverter {
      * @emits HTMLTableParser#parseError
      */
     public parse(
-        options: HTMLTableConverter.UserOptions,
+        options: HTMLTableConverter.OptionsType,
         eventDetail?: DataEvent.Detail
     ): void {
         const converter = this,
@@ -409,7 +414,7 @@ class HTMLTableConverter extends DataConverter {
                 endColumn,
                 firstRowAsNames
             } = parseOptions,
-            tableHTML = parseOptions.tableElement || this.tableElement;
+            tableHTML = parseOptions.tableHTML || this.tableElement;
 
 
         if (!(tableHTML instanceof HTMLElement)) {
@@ -422,7 +427,7 @@ class HTMLTableConverter extends DataConverter {
             });
             return;
         }
-        converter.tableElement = tableHTML;
+        converter.tableElement = this.tableElement;
         converter.tableElementID = tableHTML.id;
 
         this.emit<DataConverter.Event>({
@@ -551,13 +556,17 @@ namespace HTMLTableConverter {
      * */
 
     /**
+     * The available options for the parser
+     */
+    export type OptionsType = Partial<Options & SpecialOptions>;
+
+    /**
      * Options for the parser compatible with ClassJSON
      */
     export interface Options extends DataConverter.Options {
         decimalPoint?: string;
         exportIDColumn?: boolean;
         tableCaption?: string;
-        tableElement?: (HTMLElement|null);
         useLocalDecimalPoint?: boolean;
         useMultiLevelHeaders?: boolean;
         useRowspanHeaders?: boolean;
@@ -565,9 +574,11 @@ namespace HTMLTableConverter {
     }
 
     /**
-     * Available options of the HTMLTableConverter.
+     * Options not compatible with ClassJSON
      */
-    export type UserOptions = Partial<Options>;
+    export interface SpecialOptions {
+        tableHTML?: (HTMLElement|null);
+    }
 
 }
 

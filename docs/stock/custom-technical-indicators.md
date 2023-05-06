@@ -76,10 +76,10 @@ The JavaScript representation of the formulas above is as follows:
 
 ```js
 function getLinearRegression(xData, yData) {
-  var sumX = (xValLength - 1) * xValLength / 2,
+  var sumX = 0,
       sumY = 0,
       sumXY = 0,
-      sumX2 = ((xValLength - 1) * (xValLength) * (2 * xValLength - 1)) / 6,
+      sumX2 = 0,
       linearData = [],
       linearXData = [],
       linearYData = [],
@@ -88,9 +88,12 @@ function getLinearRegression(xData, yData) {
 
   // Get sums:
   for (i = 0; i < n; i++) {
+    x = xData[i];
     y = yData[i];
+    sumX += x;
     sumY += y;
-    sumXY += i * y;
+    sumXY += x * y;
+    sumX2 += x * x;
   }
 
   // Get slope and offset:
@@ -102,11 +105,12 @@ function getLinearRegression(xData, yData) {
 
   // Calculate linear regression:
   for (i = 0; i < n; i++) {
-    y = alpha * i + beta;
+    x = xData[i];
+    y = alpha * x + beta;
 
     // Prepare arrays required for getValues() method
-    linearData[i] = [xData[i], y];
-    linearXData[i] = xData[i];
+    linearData[i] = [x, y];
+    linearXData[i] = x;
     linearYData[i] = y;
   }
 

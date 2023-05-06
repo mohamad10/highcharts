@@ -6,19 +6,10 @@ describe('Responsive buttons.', () => {
 
     it('Dashboard should be removed without errors', () => {
         cy.toggleEditMode();
-
-        // Check after setting the size to small.
         cy.get('.highcharts-dashboards-edit-button').contains('small').click();
+
+        // Check after setting the size to small
         cy.get('#dashboard-col-0').invoke('width').should('be.lessThan', 300);
-        cy.get('.highcharts-dashboards-edit-button').should('have.class', 'selected');
-
-        // Deselect the small button.
-        cy.get('.highcharts-dashboards-edit-button').contains('small').click();
-        cy.get('#dashboard-col-0').invoke('width').should('be.greaterThan', 300);
-        cy.get('.highcharts-dashboards-edit-button').should('not.have.class', 'selected');
-
-        // Set the size to small again.
-        cy.get('.highcharts-dashboards-edit-button').contains('small').click();
 
         // Disable edit mode.
         cy.toggleEditMode();

@@ -39,7 +39,7 @@ class CrookedLine extends Annotation {
 
     /* *
      *
-     *  Functions
+     * Functions
      *
      * */
 
@@ -220,9 +220,9 @@ CrookedLine.prototype.defaultOptions = merge(
 
             events: {
                 drag: function (
-                    this: CrookedLine,
+                    this: Annotation,
                     e: AnnotationEventObject,
-                    target: CrookedLine
+                    target: Controllable
                 ): void {
                     if (
                         target.chart.isInsidePlot(
@@ -233,8 +233,7 @@ CrookedLine.prototype.defaultOptions = merge(
                             }
                         )
                     ) {
-                        const translation = this.mouseMoveToTranslation(e),
-                            typeOptions = target.options.typeOptions as any;
+                        const translation = this.mouseMoveToTranslation(e);
 
                         target.translatePoint(
                             translation.x,
@@ -243,10 +242,10 @@ CrookedLine.prototype.defaultOptions = merge(
                         );
 
                         // Update options:
-                        typeOptions.points[this.index].x =
-                            target.points[this.index].x;
-                        typeOptions.points[this.index].y =
-                            target.points[this.index].y;
+                        (target.options as any).typeOptions
+                            .points[this.index].x = target.points[this.index].x;
+                        (target.options as any).typeOptions
+                            .points[this.index].y = target.points[this.index].y;
 
                         target.redraw(false);
                     }

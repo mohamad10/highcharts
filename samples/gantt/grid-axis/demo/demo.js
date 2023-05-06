@@ -43,7 +43,7 @@ Highcharts.chart('container', {
         labels: {
             format: '{value:%E}',
             style: {
-                fontSize: '1.2em'
+                fontSize: '1.5em'
             }
         },
         linkedTo: 0
@@ -57,7 +57,7 @@ Highcharts.chart('container', {
         labels: {
             format: '{value:Week %W}',
             style: {
-                fontSize: '1.2em'
+                fontSize: '1.5em'
             }
         },
         linkedTo: 0
@@ -81,7 +81,7 @@ Highcharts.chart('container', {
         labels: {
             format: '{value:%E}',
             style: {
-                fontSize: '1.6em'
+                fontSize: '2em'
             }
         },
         min: Date.UTC(2014, 10, 19),

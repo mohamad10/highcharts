@@ -280,6 +280,7 @@ class BellcurveSeries extends AreaSplineSeries {
  * */
 
 interface BellcurveSeries extends DerivedComposition.SeriesComposition {
+    drawLegendSymbol: typeof AreaSplineSeries.prototype.drawLegendSymbol;
     pointClass: typeof BellcurvePoint;
 }
 

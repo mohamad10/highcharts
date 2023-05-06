@@ -631,12 +631,12 @@ defaultOptions.drilldown = {
      * drill into. If mapZooming is set to false the drilldown/drillup
      * animations only fade in/fade out without zooming to a specific map point.
      *
-     * @sample    maps/demo/map-drilldown-preloaded/
+     * @sample    maps/demo/map-drilldown-without-async/
      *            Map drilldown without async maps loading
      *
      * @type      {boolean}
      * @default   true
-     * @since 11.0.0
+     * @since     next
      * @product   highmaps
      * @apioption drilldown.mapZooming
      */
@@ -1533,10 +1533,7 @@ ColumnSeries.prototype.animateDrillupTo = function (init?: boolean): void {
                         dataLabel = point.dataLabel;
 
 
-                    if (
-                        point.graphic && // #3407
-                        point.visible // Don't show if invisible (#18303)
-                    ) {
+                    if (point.graphic) { // #3407
                         point.graphic[verb](inherit);
                     }
 
@@ -1751,7 +1748,7 @@ if (MapSeries) {
                 chart = this.chart,
                 group = this.group;
 
-            if (chart && group && series.options) {
+            if (chart && chart.renderer.isSVG && group && series.options) {
                 // Initialize the animation
                 if (init && chart.mapView) {
                     group.attr({
@@ -1817,7 +1814,7 @@ if (MapSeries) {
                 chart = this.chart,
                 group = this.group;
 
-            if (chart && group) {
+            if (chart && chart.renderer.isSVG && group) {
 
                 // Initialize the animation
                 if (init) {

@@ -159,6 +159,13 @@ namespace DarkGreenTheme {
                 color: '#666'
             }
         },
+        labels: {
+            style: {
+                color: '#CCC'
+            }
+        },
+
+
         navigation: {
             buttonOptions: {
                 symbolStroke: '#DDDDDD',

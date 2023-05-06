@@ -925,7 +925,7 @@ class Pointer {
      */
     public onTrackerMouseOut(e: PointerEvent): void {
         const chart = this.chart;
-        const relatedTarget = e.relatedTarget;
+        const relatedTarget = e.relatedTarget || e.toElement;
         const series = chart.hoverSeries;
 
         this.isDirectTouch = false;
@@ -1130,9 +1130,10 @@ class Pointer {
     public onContainerMouseDown(e: MouseEvent): void {
         const isPrimaryButton = ((e.buttons || e.button) & 1) === 1;
 
+        // Normalize before the 'if' for the legacy IE (#7850)
         e = this.normalize(e);
 
-        // #11635, Firefox does not reliably fire move event after click scroll
+        // #11635, Firefox does not reliable fire move event after click scroll
         if (
             H.isFirefox &&
             e.button !== 0
@@ -1140,7 +1141,7 @@ class Pointer {
             this.onContainerMouseMove(e);
         }
 
-        // #11635, limiting to primary button
+        // #11635, limiting to primary button (incl. IE 8 support)
         if (
             typeof e.button === 'undefined' ||
             isPrimaryButton
@@ -1166,18 +1167,23 @@ class Pointer {
      */
     public onContainerMouseLeave(e: MouseEvent): void {
         const chart = charts[pick(Pointer.hoverChartIndex, -1)];
+        const tooltip = this.chart.tooltip;
 
         e = this.normalize(e);
 
         // #4886, MS Touch end fires mouseleave but with no related target
         if (
             chart &&
-            e.relatedTarget &&
-            !this.inClass(e.relatedTarget as any, 'highcharts-tooltip')
+            (e.relatedTarget || (e as PointerEvent).toElement)
         ) {
             chart.pointer.reset();
             // Also reset the chart position, used in #149 fix
             chart.pointer.chartPosition = void 0;
+        }
+
+        // #11635, Firefox wheel scroll does not fire out events consistently
+        if (tooltip && !tooltip.isHidden) {
+            this.reset();
         }
     }
 
@@ -1201,6 +1207,15 @@ class Pointer {
             pEvt = this.normalize(e);
 
         this.setHoverChartIndex();
+
+        // In IE8 we apparently need this returnValue set to false in order to
+        // avoid text being selected. But in Chrome, e.returnValue is prevented,
+        // plus we don't need to run e.preventDefault to prevent selected text
+        // in modern browsers. So we set it conditionally. Remove it when IE8 is
+        // no longer needed. #2251, #3224.
+        if (!pEvt.preventDefault) {
+            pEvt.returnValue = false;
+        }
 
         if (chart.mouseIsDown === 'mousedown' || this.touchSelect(pEvt)) {
             this.drag(pEvt);
@@ -2186,8 +2201,6 @@ namespace Pointer {
      *
      * */
 
-    const composedEvents: Array<Function> = [];
-
     const composedMembers: Array<unknown> = [];
 
     /* *
@@ -2200,6 +2213,7 @@ namespace Pointer {
      * @private
      */
     export function compose(ChartClass: typeof Chart): void {
+
         if (U.pushUnique(composedMembers, ChartClass)) {
             addEvent(ChartClass, 'beforeRender', function (): void {
                 /**
@@ -2215,18 +2229,6 @@ namespace Pointer {
             });
         }
 
-    }
-
-    /**
-     * @private
-     */
-    export function dissolve(): void {
-
-        for (let i = 0, iEnd = composedEvents.length; i < iEnd; ++i) {
-            composedEvents[i]();
-        }
-
-        composedEvents.length = 0;
     }
 
 }

@@ -42,7 +42,6 @@ const {
     destroyObjectProperties,
     fireEvent,
     isNumber,
-    merge,
     pick
 } = U;
 
@@ -266,7 +265,7 @@ class StackItem {
             }
 
             if (isJustify) {
-                // Justify stackLabel into the alignBox
+                // Justify stackLabel into the stackBox
                 Series.prototype.justifyDataLabel.call(
                     axis,
                     label,

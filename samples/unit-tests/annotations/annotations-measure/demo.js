@@ -1,11 +1,6 @@
 // 1
 QUnit.test('#13664 - annotation measure on yAxis', function (assert) {
     var chart = Highcharts.chart('container', {
-        xAxis: {
-            labels: {
-                distance: 8
-            }
-        },
         yAxis: [
             {
                 height: '50%'
@@ -97,8 +92,8 @@ QUnit.test('#13664 - annotation measure on yAxis', function (assert) {
         controlPointYPos = y + height / 2;
 
     assert.equal(
-        Math.round(controlPointYPos),
-        Math.round(axisMiddlePos),
+        controlPointYPos,
+        axisMiddlePos,
         `Annotation's control points should be positioned in the middle of yAxis
         #17995`
     );

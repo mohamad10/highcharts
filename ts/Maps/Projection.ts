@@ -51,7 +51,7 @@ const wrapLon = (lon: number): number => {
     return lon;
 };
 
-class Projection {
+export default class Projection {
 
     public bounds: MapBounds|undefined;
     public options: ProjectionOptions;
@@ -754,5 +754,3 @@ class Projection {
         return path;
     }
 }
-
-export default Projection;

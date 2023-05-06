@@ -19,11 +19,12 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type DataConverter from '../../Data/Converters/DataConverter';
+import type DataConnector from '../../Data/Connectors/DataConnector';
+import type Serializable from '../Serializable';
 
 import DataTableHelper from './DataTableHelper.js';
 import GoogleSheetsConnector from '../../Data/Connectors/GoogleSheetsConnector.js';
-import Serializable from '../Serializable.js';
 import U from '../../Core/Utilities.js';
 const { merge } = U;
 
@@ -45,9 +46,15 @@ const { merge } = U;
 function fromJSON(
     json: GoogleSheetsConnectorHelper.JSON
 ): GoogleSheetsConnector {
-    return new GoogleSheetsConnector(
-        json.options || { googleAPIKey: '', googleSpreadsheetKey: '' }
-    );
+    const table = DataTableHelper.fromJSON(json.table),
+        connector = new GoogleSheetsConnector(
+            table,
+            json.options || { googleAPIKey: '', googleSpreadsheetKey: '' }
+        );
+
+    merge(true, connector.metadata, json.metadata);
+
+    return connector;
 }
 
 /**
@@ -78,14 +85,11 @@ function jsonSupportFor(
 function toJSON(
     obj: GoogleSheetsConnector
 ): GoogleSheetsConnectorHelper.JSON {
-    const options =
-        merge(obj.options) as GoogleSheetsConnectorHelper.OptionsJSON;
-
-    options.dataTable = DataTableHelper.toJSON(obj.table);
-
     return {
         $class: 'Data.GoogleSheetsConnector',
-        options
+        metadata: obj.metadata,
+        options: obj.options,
+        table: DataTableHelper.toJSON(obj.table)
     };
 }
 
@@ -104,32 +108,34 @@ namespace GoogleSheetsConnectorHelper {
      * */
 
     export interface JSON extends Serializable.JSON<'Data.GoogleSheetsConnector'> {
+        metadata: DataConnector.Metadata;
         options: OptionsJSON;
+        table: DataTableHelper.JSON;
     }
 
-    export type OptionsJSON = (JSON.Object&GoogleSheetsConnector.Options);
+    export interface OptionsJSON extends Partial<DataConverter.Options> {
+        dataRefreshRate: number;
+        enablePolling: boolean;
+        firstRowAsNames: boolean;
+        googleAPIKey: GoogleSheetsConnector.Options['googleAPIKey'];
+        googleSpreadsheetKey: GoogleSheetsConnector
+            .Options['googleSpreadsheetKey'];
+        worksheet?: number;
+    }
 
 }
-
-/* *
- *
- *  Registry
- *
- * */
-
-const GoogleSheetsConnectorHelper: Serializable.Helper<GoogleSheetsConnector, GoogleSheetsConnectorHelper.JSON> = {
-    $class: 'Data.GoogleSheetsConnector',
-    fromJSON,
-    jsonSupportFor,
-    toJSON
-};
-
-Serializable.registerHelper(GoogleSheetsConnectorHelper);
 
 /* *
  *
  *  Default Export
  *
  * */
+
+const GoogleSheetsConnectorSerializer: Serializable.Helper<GoogleSheetsConnector, GoogleSheetsConnectorHelper.JSON> = {
+    $class: 'Data.GoogleSheetsConnector',
+    fromJSON,
+    jsonSupportFor,
+    toJSON
+};
 
 export default GoogleSheetsConnectorHelper;

@@ -1453,9 +1453,8 @@ namespace OrdinalAxis {
                 axis = ordinal.axis,
                 extraRange = axis.options.overscroll,
                 distance = ordinal.overscrollPointsRange,
-                positions = [];
-
-            let max = axis.dataMax;
+                positions = [],
+                max = axis.dataMax;
 
             if (defined(distance)) {
                 // Max + pointRange because we need to scroll to the last

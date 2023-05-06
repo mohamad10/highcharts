@@ -150,10 +150,12 @@ QUnit.test('Date objects as X values, column', function (assert) {
         ]
     });
 
-    assert.greaterThan(
-        chart.series[0].points[0].graphic.width,
-        10,
-        'Column should be created'
+    assert.ok(
+        parseInt(
+            chart.series[0].points[0].graphic.element.getAttribute('width'),
+            10
+        ) > 10,
+        'Column created'
     );
 });
 

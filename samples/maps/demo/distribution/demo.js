@@ -33,9 +33,8 @@
         mapNavigation: {
             enabled: true,
             buttonOptions: {
-                align: 'right',
-                alignTo: 'spacingBox',
-                verticalAlign: 'top'
+                verticalAlign: 'bottom',
+                x: 10
             }
         },
 

@@ -61,8 +61,7 @@ Highcharts.chart('container', {
 
     plotOptions: {
         series: {
-            stacking: 'normal',
-            borderRadius: '50%'
+            stacking: 'normal'
         }
     },
 

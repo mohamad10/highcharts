@@ -598,10 +598,9 @@ QUnit.test(
             Math.round(x),
             'x position'
         );
-        assert.close(
+        assert.strictEqual(
             Math.round(label.y + label.height),
             Math.round(y),
-            1,
             'y position'
         );
     }

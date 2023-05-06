@@ -63,7 +63,6 @@ class MapLineSeries extends MapSeries {
      *         Flight routes
      *
      * @extends      plotOptions.map
-     * @excluding    dragDrop
      * @product      highmaps
      * @optionparent plotOptions.mapline
      */
@@ -84,9 +83,7 @@ class MapLineSeries extends MapSeries {
          *
          * @type {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
          */
-        fillColor: 'none',
-
-        legendSymbol: 'lineMarker'
+        fillColor: 'none'
     } as MapLineSeriesOptions);
 
     /* *
@@ -152,6 +149,8 @@ extend(MapLineSeries.prototype, {
 
     colorProp: 'stroke',
 
+    drawLegendSymbol: Series.prototype.drawLegendSymbol,
+
     pointAttrToOptions: {
         'stroke': 'color',
         'stroke-width': 'lineWidth'
@@ -191,7 +190,7 @@ export default MapLineSeries;
  * not specified, it is inherited from [chart.type](#chart.type).
  *
  * @extends   series,plotOptions.mapline
- * @excluding dataParser, dataURL, dragDrop, marker
+ * @excluding dataParser, dataURL, marker
  * @product   highmaps
  * @apioption series.mapline
  */

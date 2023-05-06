@@ -775,7 +775,7 @@ class RangeSelector {
                 width: isTextInput ?
                     ((dateBox.width + (inputBoxWidth ? -2 : 20)) + 'px') :
                     'auto',
-                height: (dateBox.height - 2) + 'px',
+                height: isTextInput ? ((dateBox.height - 2) + 'px') : 'auto',
                 border: '2px solid silver'
             });
 
@@ -849,7 +849,7 @@ class RangeSelector {
         let date = Date.parse(input);
 
         // If the value isn't parsed directly to a value by the
-        // browser's Date.parse method, try
+        // browser's Date.parse method, like YYYY-MM-DD in IE8, try
         // parsing it a different way
         if (!isNumber(date)) {
             const parts = inputDate.split('-');
@@ -991,7 +991,7 @@ class RangeSelector {
         // we need to use setAttribute instead
         input.setAttribute(
             'type',
-            preferredInputType(options.inputDateFormat || '%e %b %Y')
+            preferredInputType(options.inputDateFormat || '%b %e, %Y')
         );
 
         if (!chart.styledMode) {

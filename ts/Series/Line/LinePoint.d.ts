@@ -14,7 +14,6 @@
  *
  * */
 
-import type BBoxObject from '../../Core/Renderer/BBoxObject';
 import type LinePointOptions from './LinePointOptions';
 import type LineSeries from './LineSeries';
 import type Point from '../../Core/Series/Point';
@@ -39,7 +38,6 @@ declare module '../../Core/Series/PointLike' {
         low?: number;
         negative?: boolean;
         options: PointOptions;
-        stackBox?: BBoxObject;
         stackTotal?: number;
         stackY?: (number|null);
         yBottom?: number;

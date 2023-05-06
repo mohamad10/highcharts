@@ -74,7 +74,12 @@ Highcharts.Projection.add('UTM', UTMProjectionDefinition);
 
         series: [{
             data,
-            joinBy: null
+            joinBy: null,
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            }
         }]
     });
 })();

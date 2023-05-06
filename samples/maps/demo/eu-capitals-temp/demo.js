@@ -152,6 +152,11 @@
         series: [{
             allAreas: true,
             name: 'Temperatures',
+            states: {
+                hover: {
+                    color: '#BADA55'
+                }
+            },
             dataLabels: {
                 enabled: false
             },

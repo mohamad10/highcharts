@@ -30,9 +30,8 @@ QUnit.test('Option chart.polar update', function (assert) {
 
     assert.ok(!chart.xAxis[0].isRadial, 'Axis not radial');
 
-    assert.strictEqual(
-        chart.series[0].points[0].graphic.symbolName,
-        'roundedRect',
+    assert.ok(
+        chart.series[0].points[0].graphic.element.getAttribute('d') === null,
         'Columns not arced'
     );
 
@@ -78,9 +77,8 @@ QUnit.test('Option chart.polar update', function (assert) {
 
     assert.ok(!chart.xAxis[0].isRadial, 'Axis not radial');
 
-    assert.strictEqual(
-        chart.series[0].points[0].graphic.symbolName,
-        'roundedRect',
+    assert.ok(
+        chart.series[0].points[0].graphic.element.getAttribute('d') === null,
         'Columns not arced'
     );
     assert.ok(

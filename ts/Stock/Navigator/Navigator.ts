@@ -160,13 +160,13 @@ class Navigator {
     public opposite: boolean = void 0 as any;
     public otherHandlePos?: number;
     public outline: SVGElement = void 0 as any;
+    public outlineHeight: number = void 0 as any;
     public range: number = void 0 as any;
     public rendered: boolean = void 0 as any;
     public reversedExtremes?: boolean;
     public scrollbar?: Scrollbar;
     public scrollbarEnabled?: boolean;
-    public scrollbarHeight = 0;
-    public scrollButtonSize: number = void 0 as any;
+    public scrollbarHeight?: number;
     public scrollbarOptions?: ScrollbarOptions;
     public series?: Array<Series>;
     public shades: Array<SVGElement> = void 0 as any;
@@ -256,80 +256,74 @@ class Navigator {
             outlineWidth = navigator.outline.strokeWidth(),
             halfOutline = outlineWidth / 2,
             outlineCorrection = (outlineWidth % 2) / 2, // #5800
-            scrollButtonSize = navigator.scrollButtonSize,
-            navigatorSize = navigator.size,
-            navigatorTop = navigator.top,
-            height = navigator.height,
-            lineTop = navigatorTop - halfOutline,
-            lineBtm = navigatorTop + height;
+            outlineHeight = navigator.outlineHeight,
+            scrollbarHeight = navigator.scrollbarHeight || 0,
+            navigatorSize = navigator.size;
 
-        let left = navigator.left,
+        let left = navigator.left - scrollbarHeight,
+            navigatorTop = navigator.top,
             verticalMin,
             path: SVGPath;
 
         if (inverted) {
+            left -= halfOutline;
             verticalMin = navigatorTop + zoomedMax + outlineCorrection;
             zoomedMax = navigatorTop + zoomedMin + outlineCorrection;
 
             path = [
                 [
                     'M',
-                    left + height,
-                    navigatorTop - scrollButtonSize - outlineCorrection
+                    left + outlineHeight,
+                    navigatorTop - scrollbarHeight - outlineCorrection
                 ],
                 // top right of zoomed range
-                ['L', left + height, verticalMin],
+                ['L', left + outlineHeight, verticalMin],
                 ['L', left, verticalMin], // top left of z.r.
-                ['M', left, zoomedMax], // bottom left of z.r.
-                ['L', left + height, zoomedMax], // bottom right of z.r.
+                ['L', left, zoomedMax], // bottom left of z.r.
+                ['L', left + outlineHeight, zoomedMax], // bottom right of z.r.
                 [
                     'L',
-                    left + height,
-                    navigatorTop + navigatorSize + scrollButtonSize
+                    left + outlineHeight,
+                    navigatorTop + navigatorSize + scrollbarHeight
                 ]
             ];
             if (maskInside) {
                 path.push(
                     // upper left of zoomed range
-                    ['M', left + height, verticalMin - halfOutline],
+                    ['M', left + outlineHeight, verticalMin - halfOutline],
                     // upper right of z.r.
                     [
                         'L',
-                        left + height,
+                        left + outlineHeight,
                         zoomedMax + halfOutline
                     ]
                 );
             }
         } else {
-            left -= scrollButtonSize;
-            zoomedMin += left + scrollButtonSize - outlineCorrection;
-            zoomedMax += left + scrollButtonSize - outlineCorrection;
+            zoomedMin += left + scrollbarHeight - outlineCorrection;
+            zoomedMax += left + scrollbarHeight - outlineCorrection;
+            navigatorTop += halfOutline;
 
             path = [
                 // left
-                ['M', left, lineTop],
+                ['M', left, navigatorTop],
                 // upper left of zoomed range
-                ['L', zoomedMin, lineTop],
+                ['L', zoomedMin, navigatorTop],
                 // lower left of z.r.
-                ['L', zoomedMin, lineBtm],
+                ['L', zoomedMin, navigatorTop + outlineHeight],
                 // lower right of z.r.
-                ['M', zoomedMax, lineBtm],
+                ['L', zoomedMax, navigatorTop + outlineHeight],
                 // upper right of z.r.
-                ['L', zoomedMax, lineTop],
+                ['L', zoomedMax, navigatorTop],
                 // right
-                [
-                    'L',
-                    left + navigatorSize + scrollButtonSize * 2,
-                    navigatorTop + halfOutline
-                ]
+                ['L', left + navigatorSize + scrollbarHeight * 2, navigatorTop]
             ];
-
             if (maskInside) {
                 path.push(
                     // upper left of zoomed range
-                    ['M', zoomedMin - halfOutline, lineTop],
+                    ['M', zoomedMin - halfOutline, navigatorTop],
                     // upper right of z.r.
-                    ['L', zoomedMax + halfOutline, lineTop]
+                    ['L', zoomedMax + halfOutline, navigatorTop]
                 );
             }
         }
@@ -575,8 +569,7 @@ class Navigator {
             rendered = navigator.rendered,
             inverted = chart.inverted,
             minRange = chart.xAxis[0].minRange,
-            maxRange = chart.xAxis[0].options.maxRange,
-            scrollButtonSize = navigator.scrollButtonSize;
+            maxRange = chart.xAxis[0].options.maxRange;
 
         let navigatorWidth,
             scrollbarLeft,
@@ -608,20 +601,20 @@ class Navigator {
         navigator.left = pick(
             xAxis.left,
             // in case of scrollbar only, without navigator
-            chart.plotLeft + scrollButtonSize +
+            chart.plotLeft + (scrollbarHeight as any) +
             (inverted ? chart.plotWidth : 0)
         );
 
         let zoomedMax = navigator.size = navigatorSize = pick(
             xAxis.len,
             (inverted ? chart.plotHeight : chart.plotWidth) -
-            2 * scrollButtonSize
+            2 * (scrollbarHeight as any)
         );
 
         if (inverted) {
             navigatorWidth = scrollbarHeight;
         } else {
-            navigatorWidth = navigatorSize + 2 * scrollButtonSize;
+            navigatorWidth = navigatorSize + 2 * (scrollbarHeight as any);
         }
 
         // Get the pixel position of the handles
@@ -705,27 +698,27 @@ class Navigator {
 
         if (navigator.scrollbar) {
             if (inverted) {
-                scrollbarTop = navigator.top - scrollButtonSize;
-                scrollbarLeft = navigator.left - scrollbarHeight +
+                scrollbarTop = navigator.top - (scrollbarHeight as any);
+                scrollbarLeft = navigator.left - (scrollbarHeight as any) +
                     (navigatorEnabled || !scrollbarXAxis.opposite ? 0 :
                         // Multiple axes has offsets:
                         (scrollbarXAxis.titleOffset || 0) +
                         // Self margin from the axis.title
                         (scrollbarXAxis.axisTitleMargin as any)
                     );
-                scrollbarHeight = navigatorSize + 2 * scrollButtonSize;
+                scrollbarHeight = navigatorSize + 2 * (scrollbarHeight as any);
             } else {
                 scrollbarTop = navigator.top + (navigatorEnabled ?
                     navigator.height :
-                    -scrollbarHeight);
-                scrollbarLeft = navigator.left - scrollButtonSize;
+                    -(scrollbarHeight as any));
+                scrollbarLeft = navigator.left - (scrollbarHeight as any);
             }
             // Reposition scrollbar
             navigator.scrollbar.position(
                 scrollbarLeft,
                 scrollbarTop,
                 navigatorWidth as any,
-                scrollbarHeight
+                scrollbarHeight as any
             );
             // Keep scale 0-1
             navigator.scrollbar.setRange(
@@ -1042,13 +1035,14 @@ class Navigator {
                 pick(
                     navigator.scrollbar.options.liveRedraw,
 
-                    // By default, don't run live redraw on touch
+                    // By default, don't run live redraw on VML, on touch
                     // devices or if the chart is in boost.
+                    H.svg &&
                     !isTouchDevice &&
                     !this.chart.boosted
                 )
             ) {
-                (e as any).DOMType = e.type;
+                (e as any).DOMType = e.type; // DOMType is for IE8
                 setTimeout(function (): void {
                     navigator.onMouseUp(e);
                 }, 0);
@@ -1228,9 +1222,7 @@ class Navigator {
             scrollbarOptions = chartOptions.scrollbar || {},
             scrollbarEnabled = scrollbarOptions.enabled,
             height = navigatorEnabled && navigatorOptions.height || 0,
-            scrollbarHeight = scrollbarEnabled && scrollbarOptions.height || 0,
-            scrollButtonSize =
-                scrollbarOptions.buttonsEnabled && scrollbarHeight || 0;
+            scrollbarHeight = scrollbarEnabled && scrollbarOptions.height || 0;
 
         this.handles = [];
         this.shades = [];
@@ -1238,13 +1230,13 @@ class Navigator {
         this.chart = chart;
         this.setBaseSeries();
 
-        this.height = height;
+        this.height = height as any;
         this.scrollbarHeight = scrollbarHeight;
-        this.scrollButtonSize = scrollButtonSize;
         this.scrollbarEnabled = scrollbarEnabled;
         this.navigatorEnabled = navigatorEnabled as any;
         this.navigatorOptions = navigatorOptions;
         this.scrollbarOptions = scrollbarOptions;
+        this.outlineHeight = height + scrollbarHeight;
 
         this.opposite = pick(
             navigatorOptions.opposite,
@@ -1281,10 +1273,10 @@ class Navigator {
                 maxPadding: 0,
                 zoomEnabled: false
             }, chart.inverted ? {
-                offsets: [scrollButtonSize, 0, -scrollButtonSize, 0],
+                offsets: [scrollbarHeight, 0, -scrollbarHeight, 0],
                 width: height
             } : {
-                offsets: [0, -scrollButtonSize, 0, scrollButtonSize],
+                offsets: [0, -scrollbarHeight, 0, scrollbarHeight],
                 height: height
             })) as NavigatorAxisComposition;
 
@@ -1353,7 +1345,7 @@ class Navigator {
                 translate: function (value: number, reverse?: boolean): void {
                     const axis = chart.xAxis[0],
                         ext = axis.getExtremes(),
-                        scrollTrackWidth = axis.len - 2 * scrollButtonSize,
+                        scrollTrackWidth = axis.len - 2 * scrollbarHeight,
                         min = numExt(
                             'min',
                             axis.options.min as any,
@@ -1402,7 +1394,7 @@ class Navigator {
                 { vertical: chart.inverted }
             );
             if (!isNumber(options.margin) && navigator.navigatorEnabled) {
-                options.margin = chart.inverted ? -3 : 3;
+                options.margin = 0;
             }
             chart.scrollbar = navigator.scrollbar = new Scrollbar(
                 chart.renderer,
@@ -2031,7 +2023,7 @@ class Navigator {
                     (chart as any)[marginName] =
                         ((chart as any)[marginName] || 0) + (
                             navigator.navigatorEnabled || !chart.inverted ?
-                                navigator.height + navigator.scrollbarHeight :
+                                navigator.outlineHeight :
                                 0
                         ) + navigator.navigatorOptions.margin;
                 }

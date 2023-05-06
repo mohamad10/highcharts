@@ -1,30 +1,15 @@
-var chart = Highcharts.chart('container', {
+Highcharts.chart('container', {
     title: {
-        text: 'Time mapping',
-        align: 'left',
-        margin: 25
+        text: 'Click series to sonify'
     },
     subtitle: {
-        text: 'Points are played from bottom of y-axis and up',
-        align: 'left'
+        text: 'Points are played from bottom of y-axis and up'
     },
     chart: {
         type: 'scatter'
     },
-    sonification: {
-        duration: 4000,
-        defaultInstrumentOptions: {
-            mapping: {
-                time: 'y' // Time is mapped to Y values
-            }
-        }
-    },
     legend: {
         enabled: false
-    },
-    tooltip: {
-        headerFormat: '',
-        pointFormat: '{point.x},{point.y}'
     },
     series: [{
         data: [
@@ -44,10 +29,28 @@ var chart = Highcharts.chart('container', {
         color: 'rgba(30, 30, 200, 0.7)',
         marker: {
             radius: 5
+        },
+        cursor: 'pointer',
+        events: {
+            click: function () {
+                // Sonify the series when clicked
+                this.sonify({
+                    duration: 2600,
+                    pointPlayTime: 'y',
+                    instruments: [{
+                        instrument: 'sineMajor',
+                        instrumentMapping: {
+                            // Fade in and out points
+                            volume: function (point, extremes, time) {
+                                return Math.sin(time * Math.PI);
+                            },
+                            duration: 150,
+                            pan: 'x',
+                            frequency: 'y'
+                        }
+                    }]
+                });
+            }
         }
     }]
 });
-
-document.getElementById('sonify').onclick = function () {
-    chart.toggleSonify();
-};

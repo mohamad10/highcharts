@@ -35,7 +35,6 @@ const {
     clamp,
     defined,
     isFunction,
-    fireEvent,
     pick
 } = U;
 import VerletIntegration from './VerletIntegration.js';
@@ -228,9 +227,6 @@ class ReingoldFruchtermanLayout {
                 );
             } else {
                 this.simulation = false;
-                this.series.forEach((s): void => {
-                    fireEvent(s, 'afterSimulation');
-                });
             }
         }
     }

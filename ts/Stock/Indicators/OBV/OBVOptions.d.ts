@@ -30,6 +30,7 @@ export interface OBVOptions extends SMAOptions {
 }
 
 export interface OBVParamsOptions extends SMAParamsOptions {
+    // for inheritance
     volumeSeriesID?: string;
 }
 

@@ -46,13 +46,6 @@ const {
         }
     }
 } = SeriesRegistry;
-
-import D from '../SimulationSeriesUtilities.js';
-const {
-    initDataLabels,
-    initDataLabelsDefer
-} = D;
-
 import U from '../../Core/Utilities.js';
 const {
     addEvent,
@@ -61,7 +54,6 @@ const {
     merge,
     pick
 } = U;
-
 
 /* *
  *
@@ -127,8 +119,6 @@ class NetworkgraphSeries extends Series {
     public options: NetworkgraphSeriesOptions = void 0 as any;
 
     public points: Array<NetworkgraphPoint> = void 0 as any;
-
-    public deferDataLabels: boolean = true;
 
     /* *
      *
@@ -209,34 +199,17 @@ class NetworkgraphSeries extends Series {
      * @private
      */
     public drawDataLabels(): void {
-        // We defer drawing the dataLabels
-        // until dataLabels.animation.defer time passes
-        if (this.deferDataLabels) {
-            return;
-        }
-
-        const dlOptions = this.options.dataLabels;
-
-        let textPath;
-        if (dlOptions?.textPath) {
-            textPath = dlOptions.textPath;
-        }
+        const textPath = (this.options.dataLabels as any).textPath;
 
         // Render node labels:
         Series.prototype.drawDataLabels.call(this, this.nodes);
 
         // Render link labels:
-        if (dlOptions?.linkTextPath) {
-            // If linkTextPath is set, render link labels with linkTextPath
-            dlOptions.textPath = dlOptions.linkTextPath;
-        }
-
+        (this.options.dataLabels as any).textPath =
+            (this.options.dataLabels as any).linkTextPath;
         Series.prototype.drawDataLabels.call(this, this.data);
 
-        // Go back to textPath for nodes
-        if (dlOptions?.textPath) {
-            dlOptions.textPath = textPath;
-        }
+        (this.options.dataLabels as any).textPath = textPath;
     }
 
     /**
@@ -324,8 +297,8 @@ class NetworkgraphSeries extends Series {
         chart: NetworkgraphChart,
         options: Partial<NetworkgraphSeriesOptions>
     ): NetworkgraphSeries {
+
         super.init(chart, options);
-        initDataLabelsDefer.call(this);
 
         addEvent(this, 'updatedData', (): void => {
             if (this.layout) {
@@ -339,14 +312,6 @@ class NetworkgraphSeries extends Series {
                     node.resolveColor();
                 }
             });
-        });
-
-        // If the dataLabels.animation.defer time is longer than
-        // the time it takes for the layout to become stable then
-        // drawDataLabels would never be called (that's why we force it here)
-        addEvent(this, 'afterSimulation', function (): void {
-            this.deferDataLabels = false;
-            this.drawDataLabels();
         });
 
         return this;
@@ -560,7 +525,6 @@ extend(NetworkgraphSeries.prototype, {
     pointArrayMap: ['from', 'to'],
     requireSorting: false,
     trackerGroups: ['group', 'markerGroup', 'dataLabelsGroup'],
-    initDataLabels: initDataLabels,
     buildKDTree: noop,
     createNode: NodesComposition.createNode,
     drawTracker: columnProto.drawTracker,
@@ -632,19 +596,6 @@ export default NetworkgraphSeries;
  * @name Highcharts.SeriesNetworkgraphDataLabelsFormatterContextObject#key
  * @type {string}
  * @since 7.0.0
- */
-
-/**
- * Callback that fires after the end of Networkgraph series simulation
- * when the layout is stable.
- *
- * @callback Highcharts.NetworkgraphAfterSimulationCallbackFunction
- *
- * @param {Highcharts.Series} this
- *        The series where the event occured.
- *
- * @param {global.Event} event
- *        The event that occured.
  */
 
 ''; // detach doclets above

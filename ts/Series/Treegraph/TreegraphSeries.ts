@@ -221,7 +221,7 @@ class TreegraphSeries extends TreemapSeries {
                 (series.mapOptionsToLevel as any)[point.node.level || 0] || {};
             if (point.node.parent) {
                 const pointOptions = merge(levelOptions, point.options);
-                if (!point.linkToParent || point.linkToParent.destroyed) {
+                if (!point.linkToParent || !point.linkToParent.update) {
                     const link = new series.LinkClass().init(
                         series,
                         pointOptions,
@@ -504,11 +504,8 @@ class TreegraphSeries extends TreemapSeries {
 
     public destroy(): void {
         // Links must also be destroyed.
-        if (this.links) {
-            for (const link of this.links) {
-                link.destroy();
-            }
-            this.links.length = 0;
+        for (const link of this.links) {
+            link.destroy();
         }
 
         return seriesProto.destroy.apply(this, arguments);

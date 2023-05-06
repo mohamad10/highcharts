@@ -275,7 +275,7 @@ namespace ColumnDataLabel {
                 bottom,
                 naturalY,
                 sideOverflow,
-                size = 0,
+                size: any,
                 distributionLength;
 
             if (!length) {
@@ -316,7 +316,7 @@ namespace ColumnDataLabel {
                         point.distributeBox = {
                             target: (point.labelPosition as any).natural.y -
                                 point.top + size / 2,
-                            size,
+                            size: size,
                             rank: point.y
                         };
                         positions.push(point.distributeBox);
@@ -415,11 +415,11 @@ namespace ColumnDataLabel {
                         } as any)[(labelPosition as any).alignment] || 0)
                     ),
 
+                    // 10 is for the baseline (label vs text)
                     y: (
                         y +
                         pick(pointDataLabelsOptions.y, options.y) - // (#12985)
-                        // Vertically center
-                        (dataLabel as any).getBBox().height / 2
+                        10
                     )
                 };
                 // labelPos.x = x;

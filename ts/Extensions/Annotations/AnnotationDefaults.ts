@@ -6,7 +6,6 @@
 
 import type AnnotationOptions from './AnnotationOptions';
 import type { AnnotationPoint } from './AnnotationSeries';
-import type ControlPointOptions from './ControlPointOptions';
 
 import { Palette } from '../../Core/Color/Palettes.js';
 import U from '../../Core/Utilities.js';
@@ -39,8 +38,7 @@ const { defined } = U;
  * @requires     modules/annotations
  * @optionparent annotations
  */
-
-const AnnotationDefaults: AnnotationOptions = {
+const AnnotationDefaults: DeepPartial<AnnotationOptions> = {
 
     /**
      * Sets an ID for an annotation. Can be user later when
@@ -316,7 +314,7 @@ const AnnotationDefaults: AnnotationOptions = {
          */
         style: {
             /** @ignore */
-            fontSize: '0.7em',
+            fontSize: '11px',
             /** @ignore */
             fontWeight: 'normal',
             /** @ignore */
@@ -653,7 +651,7 @@ const AnnotationDefaults: AnnotationOptions = {
 
         width: 10
 
-    } as ControlPointOptions,
+    },
 
     /**
      * Event callback when annotation is added to the chart.
@@ -700,7 +698,7 @@ const AnnotationDefaults: AnnotationOptions = {
      */
     zIndex: 6
 
-} as AnnotationOptions; // typeOptions are expected but not set
+};
 
 /* *
  *

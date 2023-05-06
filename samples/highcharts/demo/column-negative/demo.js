@@ -11,11 +11,6 @@ Highcharts.chart('container', {
     credits: {
         enabled: false
     },
-    plotOptions: {
-        column: {
-            borderRadius: '25%'
-        }
-    },
     series: [{
         name: 'John',
         data: [5, 3, 4, 7, 2]

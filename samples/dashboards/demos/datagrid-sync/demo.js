@@ -1,7 +1,7 @@
-const CSVConnector = Dashboards.DataConnector.types.CSV;
+const { CSVConnector } = Dashboards.DataConnector.registry;
 const csvData = document.getElementById('csv').innerText;
 
-const connector = new CSVConnector({
+const connector = new CSVConnector(void 0, {
     csv: csvData,
     firstRowAsNames: true
 });

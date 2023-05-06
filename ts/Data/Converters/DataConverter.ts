@@ -25,6 +25,7 @@
 
 import type DataEvent from '../DataEvent';
 import type DataConnector from '../Connectors/DataConnector';
+import type JSON from '../../Core/JSON';
 
 import DataTable from '../DataTable.js';
 import U from '../../Core/Utilities.js';
@@ -70,31 +71,79 @@ class DataConverter implements DataEvent.Emitter {
 
     /* *
      *
+     *  Static Functions
+     *
+     * */
+
+    /**
+     * Converts an array of columns to a table instance. Second dimension of the
+     * array are the row cells.
+     *
+     * @param {Array<DataTable.Column>} [columns]
+     * Array to convert.
+     *
+     * @param {Array<string>} [headers]
+     * Column names to use.
+     *
+     * @return {DataTable}
+     * Table instance from the arrays.
+     */
+    public static getTableFromColumns(
+        columns: Array<DataTable.Column> = [],
+        headers: Array<string> = []
+    ): DataTable {
+        const table = new DataTable();
+
+        for (
+            let i = 0,
+                iEnd = Math.max(headers.length, columns.length);
+            i < iEnd;
+            ++i
+        ) {
+            table.setColumn(
+                headers[i] || `${i}`,
+                columns[i]
+            );
+        }
+
+        return table;
+    }
+
+    /* *
+     *
      *  Constructor
      *
      * */
 
     /**
-     * Constructs an instance of the DataConverter.
+     * Constructs an instance of the Data Converter.
      *
-     * @param {DataConverter.UserOptions} [options]
-     * Options for the DataConverter.
+     * @param {DataConverter.Options} [options]
+     * Options for the Data Converter.
+     *
+     * @param {DataConverter.ParseDateCallbackFunction} [parseDate]
+     * A function to parse string representations of dates
+     * into JavaScript timestamps.
      */
     public constructor(
-        options?: DataConverter.UserOptions
+        options?: Partial<DataConverter.Options>,
+        parseDate?: DataConverter.ParseDateFunction
     ) {
-        const mergedOptions = merge(DataConverter.defaultOptions, options);
+        let decimalPoint;
 
-        let regExpPoint = mergedOptions.decimalPoint;
+        this.options = merge(DataConverter.defaultOptions, options);
+        this.parseDateFn = parseDate;
 
-        if (regExpPoint === '.' || regExpPoint === ',') {
-            regExpPoint = regExpPoint === '.' ? '\\.' : ',';
+        decimalPoint = this.options.decimalPoint;
 
-            this.decimalRegExp =
-                new RegExp('^(-?[0-9]+)' + regExpPoint + '([0-9]+)$');
+        if (decimalPoint !== '.' && decimalPoint !== ',') {
+            decimalPoint = void 0;
         }
 
-        this.options = mergedOptions;
+        this.decimalRegex = (
+            decimalPoint &&
+            new RegExp('^(-?[0-9]+)' + decimalPoint + '([0-9]+)$', 'u')
+        );
     }
 
     /* *
@@ -105,8 +154,11 @@ class DataConverter implements DataEvent.Emitter {
 
     /**
      * A collection of available date formats.
+     *
+     * @name Highcharts.Data#dateFormats
+     * @type {Highcharts.Dictionary<Highcharts.DataDateFormatObject>}
      */
-    public dateFormats: Record<string, DataConverter.DateFormatObject> = {
+    private dateFormats: Record<string, DataConverter.DateFormatObject> = {
         'YYYY/mm/dd': {
             regex: /^([0-9]{4})([\-\.\/])([0-9]{1,2})\2([0-9]{1,2})$/,
             parser: function (match: (RegExpMatchArray|null)): number {
@@ -178,12 +230,17 @@ class DataConverter implements DataEvent.Emitter {
     /**
      * Regular expression used in the trim method to change a decimal point.
      */
-    protected decimalRegExp?: RegExp;
+    protected decimalRegex?: RegExp;
 
     /**
      * Options for the DataConverter.
      */
     public readonly options: DataConverter.Options;
+
+    /**
+     * Custom parsing function used instead of build-in parseDate method.
+     */
+    public parseDateFn?: DataConverter.ParseDateFunction;
 
     /* *
      *
@@ -237,14 +294,13 @@ class DataConverter implements DataEvent.Emitter {
 
     /**
      * Casts a string value to it's guessed type
-     *
-     * @param {*} value
-     * The value to examine.
+     * @param {string} value
+     * The string to examine
      *
      * @return {number|string|Date}
-     * The converted value.
+     * The converted value
      */
-    public asGuessedType(value: unknown): (number|string|Date) {
+    public asGuessedType(value: string): (number|string|Date) {
         const converter = this,
             typeMap: Record<ReturnType<DataConverter['guessType']>, Function> = {
                 'number': converter.asNumber,
@@ -271,24 +327,15 @@ class DataConverter implements DataEvent.Emitter {
         if (typeof value === 'boolean') {
             return value ? 1 : 0;
         }
-
         if (typeof value === 'string') {
-            const decimalRegex = this.decimalRegExp;
-
             if (value.indexOf(' ') > -1) {
                 value = value.replace(/\s+/g, '');
             }
-
-            if (decimalRegex) {
-                if (!decimalRegex.test(value)) {
-                    return NaN;
-                }
-                value = value.replace(decimalRegex, '$1.$2');
+            if (this.decimalRegex) {
+                value = value.replace(this.decimalRegex, '$1.$2');
             }
-
             return parseFloat(value);
         }
-
         if (value instanceof Date) {
             return value.getDate();
         }
@@ -487,51 +534,50 @@ class DataConverter implements DataEvent.Emitter {
     }
 
     /**
-     * Guesses the potential type of a string value for parsing CSV etc.
+     * Guesses the potential type of a string value
+     * (for parsing CSV etc)
      *
-     * @param {*} value
-     * The value to examine.
-     *
+     * @param {string} value
+     * The string to examine
      * @return {'number'|'string'|'Date'}
-     * Type string, either `string`, `Date`, or `number`.
+     * `string`, `Date` or `number`
      */
     public guessType(
-        value: unknown
+        value: string
     ): ('number'|'string'|'Date') {
-        const converter = this;
+        const converter = this,
+            trimVal = converter.trim(value),
+            trimInsideVal = converter.trim(value, true),
+            floatVal = parseFloat(trimInsideVal);
 
-        let result: ('string' | 'Date' | 'number') = 'string';
+        let result: ('string' | 'Date' | 'number') = 'string',
+            dateVal;
 
-        if (typeof value === 'string') {
-            const trimedValue = converter.trim(`${value}`),
-                decimalRegExp = converter.decimalRegExp;
+        // is numeric
+        if (+trimInsideVal === floatVal) {
 
-            let innerTrimedValue = converter.trim(trimedValue, true);
-
-            if (decimalRegExp) {
-                innerTrimedValue = (
-                    decimalRegExp.test(innerTrimedValue) ?
-                        innerTrimedValue.replace(decimalRegExp, '$1.$2') :
-                        ''
-                );
-            }
-
-            const floatValue = parseFloat(innerTrimedValue);
-
-            if (+innerTrimedValue === floatValue) {
-                // string is numeric
-                value = floatValue;
+            // If the number is greater than milliseconds in a year, assume
+            // datetime.
+            if (
+                floatVal > 365 * 24 * 3600 * 1000
+            ) {
+                result = 'Date';
             } else {
-                // determine if a date string
-                const dateValue = converter.parseDate(value);
-
-                result = isNumber(dateValue) ? 'Date' : 'string';
+                result = 'number';
             }
-        }
 
-        if (typeof value === 'number') {
-            // greater than milliseconds in a year assumed timestamp
-            result = value > 365 * 24 * 3600 * 1000 ? 'Date' : 'number';
+        // String, continue to determine if it is
+        // a date string or really a string.
+        } else {
+            if (trimVal && trimVal.length) {
+                dateVal = converter.parseDate(value);
+            }
+
+            if (dateVal && isNumber(dateVal)) {
+                result = 'Date';
+            } else {
+                result = 'string';
+            }
         }
 
         return result;
@@ -559,10 +605,10 @@ class DataConverter implements DataEvent.Emitter {
     /**
      * Initiates the data parsing. Should emit `parseError` on failure.
      *
-     * @param {DataConverter.UserOptions} options
-     * Options of the DataConverter.
+     * @param {DataConverter.Options} options
+     * Options for the converter.
      */
-    public parse(options: DataConverter.UserOptions): void {
+    public parse(options: DataConverter.Options): void {
         this.emit<DataConverter.Event>({
             type: 'parseError',
             columns: [],
@@ -584,17 +630,16 @@ class DataConverter implements DataEvent.Emitter {
      * to use to parse date values.
      */
     private parseDate(value: string, dateFormatProp?: string): number {
-        const converter = this,
-            options = converter.options;
+        const converter = this;
 
-        let dateFormat = dateFormatProp || options.dateFormat,
+        let dateFormat = dateFormatProp || converter.options.dateFormat,
             result = NaN,
             key,
             format,
             match;
 
-        if (options.parseDate) {
-            result = options.parseDate(value);
+        if (converter.parseDateFn) {
+            result = converter.parseDateFn(value);
         } else {
             // Auto-detect the date format the first time
             if (!dateFormat) {
@@ -675,12 +720,18 @@ class DataConverter implements DataEvent.Emitter {
         str: string,
         inside?: boolean
     ): string {
+        const converter = this;
+
         if (typeof str === 'string') {
             str = str.replace(/^\s+|\s+$/g, '');
 
             // Clear white space insdie the string, like thousands separators
             if (inside && /^[0-9\s]+$/.test(str)) {
                 str = str.replace(/\s/g, '');
+            }
+
+            if (converter.decimalRegex) {
+                str = str.replace(converter.decimalRegex, '$1.$2');
             }
         }
 
@@ -733,7 +784,7 @@ namespace DataConverter {
     /**
      * The shared options for all DataConverter instances
      */
-    export interface Options {
+    export interface Options extends JSON.Object {
         dateFormat?: string;
         alternativeFormat?: string;
         decimalPoint?: string;
@@ -742,13 +793,6 @@ namespace DataConverter {
         startColumn: number;
         endColumn: number;
         firstRowAsNames: boolean;
-
-        /**
-         * A function to parse string representations of dates into JavaScript
-         * timestamps. If not set, the default implementation will be used.
-         */
-        parseDate?: DataConverter.ParseDateFunction;
-
         switchRowsAndColumns: boolean;
     }
 
@@ -763,52 +807,9 @@ namespace DataConverter {
     /**
      * Contains supported types to convert values from and to.
      */
-    export type Type = (boolean|null|number|string|DataTable|Date|undefined);
-
-    /**
-     * Options of the DataConverter.
-     */
-    export type UserOptions = Partial<Options>;
-
-    /* *
-     *
-     *  Functions
-     *
-     * */
-
-    /**
-     * Converts an array of columns to a table instance. Second dimension of the
-     * array are the row cells.
-     *
-     * @param {Array<DataTable.Column>} [columns]
-     * Array to convert.
-     *
-     * @param {Array<string>} [headers]
-     * Column names to use.
-     *
-     * @return {DataTable}
-     * Table instance from the arrays.
-     */
-    export function getTableFromColumns(
-        columns: Array<DataTable.Column> = [],
-        headers: Array<string> = []
-    ): DataTable {
-        const table = new DataTable();
-
-        for (
-            let i = 0,
-                iEnd = Math.max(headers.length, columns.length);
-            i < iEnd;
-            ++i
-        ) {
-            table.setColumn(
-                headers[i] || `${i}`,
-                columns[i]
-            );
-        }
-
-        return table;
-    }
+    export type Type = (
+        boolean|null|number|string|DataTable|Date|undefined
+    );
 
 }
 

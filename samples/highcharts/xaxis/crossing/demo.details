@@ -1,6 +1,0 @@
----
- name: Axis crossing
- authors:
-   - Torstein Hønsi
- js_wrap: b
-...

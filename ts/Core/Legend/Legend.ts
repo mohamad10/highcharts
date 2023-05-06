@@ -298,8 +298,8 @@ class Legend {
             );
         }
 
-        this.itemMarginTop = options.itemMarginTop;
-        this.itemMarginBottom = options.itemMarginBottom;
+        this.itemMarginTop = options.itemMarginTop || 0;
+        this.itemMarginBottom = options.itemMarginBottom || 0;
         this.padding = padding;
         this.initialItemY = padding - 5; // 5 is pixels above the text
         this.symbolWidth = pick(options.symbolWidth, 16);
@@ -382,7 +382,8 @@ class Legend {
 
             if (label) {
                 label.css({
-                    fill: textColor
+                    fill: textColor,
+                    color: textColor // #1553, oldIE
                 });
             }
 
@@ -729,7 +730,10 @@ class Legend {
             // Get the baseline for the first item - the font size is equal for
             // all
             if (!legend.baseline) {
-                legend.fontMetrics = renderer.fontMetrics(label);
+                legend.fontMetrics = renderer.fontMetrics(
+                    chart.styledMode ? 12 : (itemStyle as any).fontSize,
+                    label
+                );
                 legend.baseline =
                     legend.fontMetrics.f + 3 + legend.itemMarginTop;
                 label.attr('y', legend.baseline);
@@ -1376,9 +1380,10 @@ class Legend {
                 if (
                     // check the last item
                     i === allItems.length - 1 &&
-                    // if adding next page is needed (#18768)
+                    // if adding next page is needed
                     y + h - pages[len - 1] > clipHeight &&
-                    y > pages[len - 1]
+                    // and will fully fit inside a new page
+                    h <= clipHeight
                 ) {
                     pages.push(y);
                     legendItem.pageIx = len;
@@ -1393,7 +1398,7 @@ class Legend {
             // PDF export (#1787)
             if (!clipRect) {
                 clipRect = legend.clipRect =
-                    renderer.clipRect(0, padding - 2, 9999, 0);
+                    renderer.clipRect(0, padding, 9999, 0);
                 legend.contentGroup.clip(clipRect);
             }
 

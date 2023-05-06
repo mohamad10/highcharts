@@ -6,10 +6,6 @@ QUnit.test('Column type navigator', function (assert) {
                     pointRange: null
                 }
             },
-            scrollbar: {
-                buttonsEnabled: true,
-                height: 14
-            },
             series: [
                 {
                     type: 'column',

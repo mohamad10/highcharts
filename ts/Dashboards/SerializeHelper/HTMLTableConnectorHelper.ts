@@ -19,12 +19,14 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type DataConnector from '../../Data/Connectors/DataConnector';
+import type JSON from '../../Core/JSON';
+import type Serializable from '../Serializable';
 
 import DataTableHelper from './DataTableHelper.js';
 import HTMLTableConnector from '../../Data/Connectors/HTMLTableConnector.js';
-import Serializable from '../Serializable.js';
 import U from '../../Core/Utilities.js';
+import HTMLTableConverterHelper from './HTMLTableConverterHelper';
 const { merge } = U;
 
 /* *
@@ -45,7 +47,13 @@ const { merge } = U;
 function fromJSON(
     json: HTMLTableConnectorHelper.JSON
 ): HTMLTableConnector {
-    return new HTMLTableConnector(json.options);
+    const converter = HTMLTableConverterHelper.fromJSON(json.converter),
+        table = DataTableHelper.fromJSON(json.table),
+        connector = new HTMLTableConnector(table, json.options, converter);
+
+    merge(true, connector.metadata, json.metadata);
+
+    return connector;
 }
 
 /**
@@ -76,14 +84,34 @@ function jsonSupportFor(
 function toJSON(
     obj: HTMLTableConnector
 ): HTMLTableConnectorHelper.JSON {
-    const options = merge(obj.options) as HTMLTableConnectorHelper.OptionsJSON;
+    const json: HTMLTableConnectorHelper.JSON = {
+            $class: 'Data.HTMLTableConnector',
+            converter: HTMLTableConverterHelper.toJSON(obj.converter),
+            metadata: obj.metadata,
+            options: {},
+            table: DataTableHelper.toJSON(obj.table)
+        },
+        jsonOptions: HTMLTableConnectorHelper.OptionsJSON = json.options,
+        options = obj.options;
 
-    options.dataTable = DataTableHelper.toJSON(obj.table);
+    // options
 
-    return {
-        $class: 'Data.HTMLTableConnector',
-        options
-    };
+    jsonOptions.endColumn = options.endColumn;
+    jsonOptions.endRow = options.endRow;
+    jsonOptions.firstRowAsNames = options.firstRowAsNames;
+    jsonOptions.startColumn = options.startColumn;
+    jsonOptions.startRow = options.startRow;
+    jsonOptions.switchRowsAndColumns = options.switchRowsAndColumns;
+
+    if (typeof options.table === 'string') {
+        jsonOptions.table = options.table;
+    } else {
+        jsonOptions.table = options.table.id;
+    }
+
+    // done
+
+    return json;
 }
 
 /* *
@@ -101,10 +129,15 @@ namespace HTMLTableConnectorHelper {
      * */
 
     export interface JSON extends Serializable.JSON<'Data.HTMLTableConnector'> {
+        converter: HTMLTableConverterHelper.JSON;
+        metadata: DataConnector.Metadata;
         options: OptionsJSON;
+        table: DataTableHelper.JSON;
     }
 
-    export type OptionsJSON = (JSON.Object&HTMLTableConnector.Options);
+    export interface OptionsJSON extends JSON.Object, Partial<HTMLTableConnector.Options> {
+        table?: string;
+    }
 
 }
 
@@ -120,13 +153,5 @@ const HTMLTableConnectorHelper: Serializable.Helper<HTMLTableConnector, HTMLTabl
     jsonSupportFor,
     toJSON
 };
-
-Serializable.registerHelper(HTMLTableConnectorHelper);
-
-/* *
- *
- *  Default Export
- *
- * */
 
 export default HTMLTableConnectorHelper;

@@ -157,6 +157,11 @@ const theme: DeepPartial<Options> = {
             color: 'windowText'
         }
     },
+    labels: {
+        style: {
+            color: 'windowText'
+        }
+    },
     drilldown: {
         activeAxisLabelStyle: {
             color: 'windowText'

@@ -27,7 +27,12 @@
             data: data,
             mapData: topology,
             joinBy: null,
-            name: 'Random data'
+            name: 'Random data',
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            }
         }]
     });
 })();

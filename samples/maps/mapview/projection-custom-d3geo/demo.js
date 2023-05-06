@@ -67,7 +67,12 @@ if (window.d3) {
 
         series: [{
             data,
-            joinBy: null
+            joinBy: null,
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            }
         }]
     });
 })();

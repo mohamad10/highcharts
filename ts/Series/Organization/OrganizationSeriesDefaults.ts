@@ -271,7 +271,7 @@ const OrganizationSeriesDefaults: OrganizationSeriesOptions = {
             /** @internal */
             fontWeight: 'normal',
             /** @internal */
-            fontSize: '0.9em'
+            fontSize: '13px'
         },
 
         useHTML: true,
@@ -444,7 +444,7 @@ const OrganizationSeriesDefaults: OrganizationSeriesOptions = {
  * @type      {string}
  * @product   highcharts
  * @apioption series.organization.dataLabels.linkFormat
- * @since 11.0.0
+ * @since next
  */
 
 /**
@@ -455,7 +455,7 @@ const OrganizationSeriesDefaults: OrganizationSeriesOptions = {
  * @type      {OrganizationDataLabelsFormatterCallbackFunction}
  * @product   highcharts
  * @apioption series.organization.dataLabels.linkFormatter
- * @since 11.0.0
+ * @since next
  */
 
 /**
@@ -468,7 +468,7 @@ const OrganizationSeriesDefaults: OrganizationSeriesOptions = {
  * @type { DataLabelTextPathOptions }
  * @product highcharts
  * @apioption series.organization.dataLabels.linkTextPath
- * @since 11.0.0
+ * @since next
  */
 
 /**

@@ -23,6 +23,7 @@
  * */
 
 import type DataEvent from '../DataEvent';
+import type JSON from '../../Core/JSON';
 
 import DataConnector from './DataConnector.js';
 import DataTable from '../DataTable.js';
@@ -64,18 +65,27 @@ class HTMLTableConnector extends DataConnector {
     /**
      * Constructs an instance of HTMLTableConnector.
      *
-     * @param {HTMLTableConnector.UserOptions} [options]
-     * Options for the connector and converter.
+     * @param {DataTable} table
+     * Optional table to create the connector from
+     *
+     * @param {HTMLTableConnector.OptionsType} options
+     * Options for the connector and parser
+     *
+     * @param {DataConverter} converter
+     * Optional converter to replace the default converter
      */
     public constructor(
-        options?: HTMLTableConnector.UserOptions
+        table: DataTable = new DataTable(),
+        options: HTMLTableConnector.OptionsType = {},
+        converter?: HTMLTableConverter
     ) {
-        const mergedOptions = merge(HTMLTableConnector.defaultOptions, options);
+        super(table);
 
-        super(mergedOptions);
-
-        this.converter = new HTMLTableConverter(mergedOptions);
-        this.options = mergedOptions;
+        this.options = merge(HTMLTableConnector.defaultOptions, options);
+        this.converter = converter || new HTMLTableConverter(
+            this.options,
+            this.tableElement
+        );
     }
 
     /* *
@@ -88,7 +98,9 @@ class HTMLTableConnector extends DataConnector {
      * Options for the HTMLTable dataconnector
      * @todo this should not include parsing options
      */
-    public readonly options: HTMLTableConnector.Options;
+    public readonly options: (
+        HTMLTableConnector.Options&HTMLTableConverter.OptionsType
+    );
 
     /**
      * The attached parser, which can be replaced in the constructor
@@ -157,7 +169,7 @@ class HTMLTableConnector extends DataConnector {
         }
 
         connector.converter.parse(
-            merge({ tableElement: connector.tableElement }, connector.options),
+            merge({ tableHTML: connector.tableElement }, connector.options),
             eventDetail
         );
 
@@ -205,7 +217,7 @@ namespace HTMLTableConnector {
     /**
      * Options for exporting the connector as an HTML table
      */
-    export interface ExportOptions {
+    export interface ExportOptions extends JSON.Object {
         decimalPoint?: string|null;
         exportIDColumn?: boolean;
         tableCaption?: string;
@@ -223,17 +235,17 @@ namespace HTMLTableConnector {
     }
 
     /**
-     * Options of the HTMLTableConnector.
+     * Internal options for the HTMLTableConnector class
      */
-    export interface Options extends DataConnector.Options {
+    export interface Options {
         table: (string|HTMLElement);
     }
 
     /**
-     * Available options for constructor and converter of the
-     * HTMLTableConnector.
+     * Options used in the constructor of HTMLTableConnector
      */
-    export type UserOptions = (Partial<Options>&HTMLTableConverter.UserOptions);
+    export type OptionsType =
+        Partial<(HTMLTableConnector.Options&HTMLTableConverter.OptionsType)>;
 
 }
 
@@ -243,13 +255,13 @@ namespace HTMLTableConnector {
  *
  * */
 
-declare module './DataConnectorType' {
-    interface DataConnectorTypes {
+DataConnector.addConnector(HTMLTableConnector);
+
+declare module './ConnectorType' {
+    interface ConnectorTypeRegistry {
         HTMLTable: typeof HTMLTableConnector;
     }
 }
-
-DataConnector.registerType('HTMLTable', HTMLTableConnector);
 
 /* *
  *

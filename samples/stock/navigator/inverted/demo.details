@@ -1,5 +1,5 @@
 ---
- name: Inverted navigator
+ name: Highcharts Stock Demo
  authors:
    - Paweł Fus
  js_wrap: b

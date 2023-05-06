@@ -28,6 +28,7 @@ export interface VWAPOptions extends SMAOptions {
 }
 
 export interface VWAPParamsOptions extends SMAParamsOptions {
+    // for inheritance
     volumeSeriesID?: string;
 }
 

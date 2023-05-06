@@ -242,8 +242,7 @@ const options: BreadcrumbsOptions = {
          *  @since 10.0.0
          */
         style: {
-            color: Palette.neutralColor60,
-            fontSize: '0.8em'
+            color: Palette.neutralColor60
         }
     },
 

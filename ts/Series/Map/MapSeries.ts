@@ -38,6 +38,7 @@ import ColorMapComposition from '../ColorMapComposition.js';
 import CU from '../CenteredUtilities.js';
 import H from '../../Core/Globals.js';
 const { noop } = H;
+import LegendSymbol from '../../Core/Legend/LegendSymbol.js';
 import MapChart from '../../Core/Chart/MapChart.js';
 const {
     splitPath
@@ -127,7 +128,7 @@ class MapSeries extends ScatterSeries {
      *         Choropleth map
      *
      * @extends      plotOptions.scatter
-     * @excluding    boostBlending, boostThreshold, dragDrop, cluster, marker
+     * @excluding    marker, cluster
      * @product      highmaps
      * @optionparent plotOptions.map
      *
@@ -175,7 +176,7 @@ class MapSeries extends ScatterSeries {
          * @type   {Highcharts.SeriesLinecapValue}
          * @since  10.3.3
          */
-        linecap: 'round',
+        linecap: 'butt',
 
         /**
          * @ignore-option
@@ -257,7 +258,7 @@ class MapSeries extends ScatterSeries {
          *
          * @private
          */
-        borderColor: Palette.neutralColor10,
+        borderColor: Palette.neutralColor20,
 
         /**
          * The border width of each map area.
@@ -336,7 +337,7 @@ class MapSeries extends ScatterSeries {
             hover: {
 
                 /** @ignore-option */
-                halo: void 0,
+                halo: null as any,
 
                 /**
                  * The color of the shape in this state.
@@ -356,7 +357,6 @@ class MapSeries extends ScatterSeries {
                  * @product   highmaps
                  * @apioption plotOptions.series.states.hover.borderColor
                  */
-                borderColor: Palette.neutralColor60,
 
                 /**
                  * The border width of the point in this state
@@ -365,7 +365,6 @@ class MapSeries extends ScatterSeries {
                  * @product   highmaps
                  * @apioption plotOptions.series.states.hover.borderWidth
                  */
-                borderWidth: 2
 
                 /**
                  * The relative brightness of the point when hovered, relative
@@ -373,9 +372,10 @@ class MapSeries extends ScatterSeries {
                  *
                  * @type      {number}
                  * @product   highmaps
-                 * @default   0
+                 * @default   0.2
                  * @apioption plotOptions.series.states.hover.brightness
                  */
+                brightness: 0.2
             },
 
             /**
@@ -410,9 +410,7 @@ class MapSeries extends ScatterSeries {
                  */
                 color: Palette.neutralColor20
             }
-        },
-
-        legendSymbol: 'rectangle'
+        }
     } as MapSeriesOptions);
 
     /* *
@@ -467,32 +465,36 @@ class MapSeries extends ScatterSeries {
 
     /**
      * The initial animation for the map series. By default, animation is
-     * disabled.
+     * disabled. Animation of map shapes is not at all supported in VML
+     * browsers.
      * @private
      */
     public animate(init?: boolean): void {
         const { chart, group } = this,
             animation = animObject(this.options.animation);
 
-        // Initialize the animation
-        if (init) {
+        if (chart.renderer.isSVG) {
 
-            // Scale down the group and place it in the center
-            group.attr({
-                translateX: chart.plotLeft + chart.plotWidth / 2,
-                translateY: chart.plotTop + chart.plotHeight / 2,
-                scaleX: 0.001, // #1499
-                scaleY: 0.001
-            });
+            // Initialize the animation
+            if (init) {
 
-        // Run the animation
-        } else {
-            group.animate({
-                translateX: chart.plotLeft,
-                translateY: chart.plotTop,
-                scaleX: 1,
-                scaleY: 1
-            }, animation);
+                // Scale down the group and place it in the center
+                group.attr({
+                    translateX: chart.plotLeft + chart.plotWidth / 2,
+                    translateY: chart.plotTop + chart.plotHeight / 2,
+                    scaleX: 0.001, // #1499
+                    scaleY: 0.001
+                });
+
+            // Run the animation
+            } else {
+                group.animate({
+                    translateX: chart.plotLeft,
+                    translateY: chart.plotTop,
+                    scaleX: 1,
+                    scaleY: 1
+                }, animation);
+            }
         }
     }
 
@@ -514,6 +516,7 @@ class MapSeries extends ScatterSeries {
         return Boolean(
             this.isDirtyData ||
             this.chart.isResizing ||
+            this.chart.renderer.isVML ||
             !this.hasRendered
         );
     }
@@ -529,7 +532,6 @@ class MapSeries extends ScatterSeries {
         if (this.dataLabelsGroup) {
             this.dataLabelsGroup.clip(this.chart.clipRect);
         }
-
     }
 
     /**
@@ -942,7 +944,6 @@ class MapSeries extends ScatterSeries {
             if (defined(stateStrokeWidth)) {
                 pointStrokeWidth = stateStrokeWidth;
             }
-            attr.stroke = stateOptions.borderColor ?? point.color;
         }
 
         if (pointStrokeWidth && mapView) {
@@ -1284,12 +1285,6 @@ class MapSeries extends ScatterSeries {
                         d: MapPoint.getProjectedPath(point, projection)
                     };
                 }
-
-                if (point.projectedPath && !point.projectedPath.length) {
-                    point.setVisible(false);
-                } else {
-                    point.setVisible(true);
-                }
             });
         }
 
@@ -1305,6 +1300,7 @@ class MapSeries extends ScatterSeries {
  * */
 
 interface MapSeries extends ColorMapComposition.SeriesComposition {
+    drawLegendSymbol: typeof LegendSymbol.drawRectangle;
     getCenter: typeof CU['getCenter'];
     pointArrayMap: ColorMapComposition.SeriesComposition['pointArrayMap'];
     pointClass: typeof MapPoint;
@@ -1340,6 +1336,8 @@ extend(MapSeries.prototype, {
 
     // No graph for the map series
     drawGraph: noop,
+
+    drawLegendSymbol: LegendSymbol.drawRectangle,
 
     forceDL: true,
 
@@ -1419,7 +1417,7 @@ export default MapSeries;
  * is inherited from [chart.type](#chart.type).
  *
  * @extends   series,plotOptions.map
- * @excluding dataParser, dataURL, dragDrop, marker
+ * @excluding dataParser, dataURL, marker
  * @product   highmaps
  * @apioption series.map
  */
@@ -1553,10 +1551,8 @@ export default MapSeries;
  * coordinates in `projectedUnits` for geometry type other than `Point`,
  * instead of `[longitude, latitude]`.
  *
- * @sample maps/series/mappoint-line-geometry/
- *         Map point and line geometry
- * @sample maps/series/geometry-types/
- *         Geometry types
+ * @sample maps/series/data-geometry/
+ *         Geometry defined in data
  *
  * @type      {Object}
  * @since 9.3.0
@@ -1567,9 +1563,6 @@ export default MapSeries;
 /**
  * The geometry type. Can be one of `LineString`, `Polygon`, `MultiLineString`
  * or `MultiPolygon`.
- *
- * @sample maps/series/geometry-types/
- *         Geometry types
  *
  * @declare   Highcharts.MapGeometryTypeValue
  * @type      {string}

@@ -19,10 +19,10 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type CoreJSON from '../../Core/JSON';
+import type Serializable from '../Serializable';
 
 import DataCursor from '../../Data/DataCursor.js';
-import Serializable from '../Serializable.js';
 
 /* *
  *
@@ -78,7 +78,7 @@ function toJSON(
         tableIds = Object.keys(obj.stateMap);
 
     let cursors: Array<DataCursor.Type>,
-        cursorsJSON: JSON.Array<DataCursorHelper.TypeJSON>,
+        cursorsJSON: CoreJSON.Array<DataCursorHelper.TypeJSON>,
         tableId: DataCursor.TableId,
         state: DataCursor.State,
         states: Array<DataCursor.State>;
@@ -126,14 +126,14 @@ namespace DataCursorHelper {
         | RangeJSON
     );
 
-    export interface PositionJSON extends JSON.Object {
+    export interface PositionJSON extends CoreJSON.Object {
         column?: string;
         row?: number;
         state: DataCursor.State;
         type: 'position';
     }
 
-    export interface RangeJSON extends JSON.Object {
+    export interface RangeJSON extends CoreJSON.Object {
         columns?: Array<string>;
         firstRow: number;
         lastRow: number;
@@ -145,15 +145,16 @@ namespace DataCursorHelper {
         stateMap: StateMapJSON;
     }
 
-    export type StateMapJSON = JSON.Object<JSON.Object<JSON.Array<TypeJSON>>>;
+    export type StateMapJSON = CoreJSON.Object<CoreJSON.Object<CoreJSON.Array<TypeJSON>>>;
 
 }
 
 /* *
  *
- *  Registry
+ *  Default Export
  *
  * */
+
 
 const DataCursorHelper: Serializable.Helper<DataCursor, DataCursorHelper.JSON> = {
     $class: 'Data.DataCursor',
@@ -161,13 +162,5 @@ const DataCursorHelper: Serializable.Helper<DataCursor, DataCursorHelper.JSON> =
     jsonSupportFor,
     toJSON
 };
-
-Serializable.registerHelper(DataCursorHelper);
-
-/* *
- *
- *  Default Export
- *
- * */
 
 export default DataCursorHelper;

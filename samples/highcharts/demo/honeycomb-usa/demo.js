@@ -20,10 +20,7 @@ Highcharts.chart('container', {
     },
 
     title: {
-        text: 'U.S. states by population in 2016',
-        style: {
-            fontSize: '1em'
-        }
+        text: 'U.S. states by population in 2016'
     },
 
     subtitle: {

@@ -28,6 +28,18 @@ const { merge } = U;
 
 /* *
  *
+ *  Declarations
+ *
+ * */
+
+declare module '../Controllables/ControllableLike' {
+    interface ControllableLike {
+        secondLineEdgePoints: [Function, Function];
+    }
+}
+
+/* *
+ *
  *  Functions
  *
  * */
@@ -188,7 +200,6 @@ class FibonacciTimeZones extends CrookedLine {
 
 interface FibonacciTimeZones {
     defaultOptions: CrookedLine['defaultOptions'];
-    secondLineEdgePoints: [Function, Function];
 }
 
 FibonacciTimeZones.prototype.defaultOptions = merge(
@@ -223,7 +234,7 @@ FibonacciTimeZones.prototype.defaultOptions = merge(
                     this: ControlPoint
                 ): PositionObject {
                     // The control point is in the middle of the second line
-                    const target = this.target as FibonacciTimeZones,
+                    const target = this.target,
                         graphic = this.graphic,
                         edgePoints = target.secondLineEdgePoints,
                         args = { annotation: target },

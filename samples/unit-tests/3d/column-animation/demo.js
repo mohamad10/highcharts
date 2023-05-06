@@ -53,10 +53,9 @@ QUnit.test('Point animation', function (assert) {
         point.update(200);
 
         realPos = getPhysicalHeight(point);
-        assert.close(
+        assert.strictEqual(
             realPos,
             initialPos,
-            1,
             'Time 0 - point should not yet have started moving'
         );
 

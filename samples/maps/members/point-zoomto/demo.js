@@ -53,6 +53,11 @@
                         e.point.zoomTo();
                     }
                 },
+                states: {
+                    hover: {
+                        color: '#a4edba'
+                    }
+                },
                 tooltip: {
                     pointFormat: '{point.id} {point.name}',
                     valueSuffix: '/km²'

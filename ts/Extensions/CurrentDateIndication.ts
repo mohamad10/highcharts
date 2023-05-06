@@ -138,7 +138,7 @@ const defaultOptions: CurrentDateIndicatorOptions = {
          */
         style: {
             /** @internal */
-            fontSize: '0.7em'
+            fontSize: '10px'
         }
     }
 };

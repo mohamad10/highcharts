@@ -20,7 +20,9 @@ import type MomentumOptions from './MomentumOptions';
 import type MomentumPoint from './MomentumPoint';
 
 import SeriesRegistry from '../../../Core/Series/SeriesRegistry.js';
-const { sma: SMAIndicator } = SeriesRegistry.seriesTypes;
+const {
+    sma: SMAIndicator
+} = SeriesRegistry.seriesTypes;
 import U from '../../../Core/Utilities.js';
 const {
     extend,
@@ -34,9 +36,6 @@ const {
  *
  * */
 
-/**
- * @private
- */
 function populateAverage(
     xVal: Array<number>,
     yVal: Array<Array<number>>,
@@ -112,16 +111,16 @@ class MomentumIndicator extends SMAIndicator {
         series: TLinkedSeries,
         params: MomentumOptions
     ): (IndicatorValuesObject<TLinkedSeries>|undefined) {
-        const period: number = params.period,
+        let period: number = params.period,
             index: number = params.index as any,
             xVal: Array<number> = (series.xData as any),
             yVal: Array<Array<number>> = (series.yData as any),
             yValLen: number = yVal ? yVal.length : 0,
+            yValue: (Array<number>|number) = yVal[0],
             MM: Array<Array<number>> = [],
             xData: Array<number> = [],
-            yData: Array<number> = [];
-
-        let i: number,
+            yData: Array<number> = [],
+            i: number,
             MMPoint: [number, number];
 
         if (xVal.length <= period) {
@@ -129,7 +128,9 @@ class MomentumIndicator extends SMAIndicator {
         }
 
         // Switch index for OHLC / Candlestick / Arearange
-        if (!isArray(yVal[0])) {
+        if (isArray(yVal[0])) {
+            yValue = (yVal[0][index] as any);
+        } else {
             return;
         }
 
@@ -152,7 +153,6 @@ class MomentumIndicator extends SMAIndicator {
             yData: yData
         } as IndicatorValuesObject<TLinkedSeries>;
     }
-
 }
 
 /* *

@@ -76,7 +76,11 @@
                             valueSuffix: '%'
                         },
                         borderWidth: 0.5,
-
+                        states: {
+                            hover: {
+                                color: '#a4edba'
+                            }
+                        },
                         shadow: false,
                         accessibility: {
                             enabled: false

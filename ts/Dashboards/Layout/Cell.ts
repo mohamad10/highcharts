@@ -22,20 +22,24 @@
  *
  * */
 
-import type Component from '../Components/Component.js';
 import type CSSJSONObject from '../CSSJSONObject';
-import type { HTMLDOMElement } from '../../Core/Renderer/DOMElementType';
+import type Component from '../Components/Component.js';
 import type JSON from '../../Core/JSON';
 import type LayoutType from './Layout';
 import type Row from './Row';
+import type { HTMLDOMElement } from '../../Core/Renderer/DOMElementType';
 import type Serializable from '../Serializable';
 
-import Bindings from '../Actions/Bindings.js';
-const { componentFromJSON } = Bindings;
-import EditGlobals from '../EditMode/EditGlobals.js';
 import Globals from '../Globals.js';
 import GUIElement from './GUIElement.js';
+import Bindings from '../Actions/Bindings.js';
 import U from '../../Core/Utilities.js';
+import EditGlobals from '../EditMode/EditGlobals.js';
+
+const {
+    componentFromJSON
+} = Bindings;
+
 const {
     merge,
     fireEvent
@@ -62,7 +66,7 @@ class Cell extends GUIElement {
     public static fromJSON(
         json: Cell.JSON,
         row?: Row
-    ): (Cell|undefined) {
+    ): Cell|undefined {
         if (row) {
             const options = json.options;
 
@@ -80,9 +84,7 @@ class Cell extends GUIElement {
                         options.parentContainerId,
                     mountedComponentJSON: options.mountedComponentJSON,
                     style: options.style,
-                    layoutJSON: options.layoutJSON,
-                    width: options.width,
-                    height: options.height
+                    layoutJSON: options.layoutJSON
                 }
             );
         }
@@ -271,7 +273,7 @@ class Cell extends GUIElement {
      * @param {Component.JSON} [json]
      * Component JSON.
      *
-     * @param {HTMLDOMElement} [cellContainer]
+     * @param {HTMLDOMElement} cellContainer
      * Cell container
      *
      * @return {boolean}
@@ -280,7 +282,7 @@ class Cell extends GUIElement {
      */
     public mountComponentFromJSON(
         json: Component.JSON,
-        cellContainer: (HTMLDOMElement|undefined) // @todo
+        cellContainer: HTMLDOMElement|undefined
     ): boolean {
         const cell = this;
 
@@ -337,8 +339,6 @@ class Cell extends GUIElement {
             options: {
                 containerId: (cell.container as HTMLElement).id,
                 parentContainerId: rowContainerId,
-                width: cell.options.width,
-                height: cell.options.height,
                 mountedComponentJSON:
                     cell.mountedComponent && cell.mountedComponent.toJSON(),
                 style: cell.options.style,
@@ -350,10 +350,10 @@ class Cell extends GUIElement {
     protected changeVisibility(
         setVisible: boolean = true
     ): void {
-        super.changeVisibility(setVisible);
-
         const cell = this,
             row = cell.row;
+
+        super.changeVisibility(setVisible);
 
         // Change row visibility if needed.
         if (!cell.row.getVisibleCells().length) {
@@ -369,7 +369,7 @@ class Cell extends GUIElement {
 
     public getParentCell(
         level: number
-    ): (Cell|undefined) {
+    ): Cell | undefined {
         const cell = this;
 
         let parentCell;
@@ -421,16 +421,16 @@ class Cell extends GUIElement {
 
     public reflow(
         dashContainerSize?: string
-    ): void {
+    ):void {
         const cell = this,
             cntSize = dashContainerSize ||
                 cell.row.layout.board.getLayoutContainerSize(),
             respoOptions = cell.options.responsive,
             optWidth = cell.options.width;
 
-        if (cell.container) {
-            let width = '';
+        let width;
 
+        if (cell.container) {
             if (
                 respoOptions &&
                 respoOptions[cntSize] &&
@@ -445,14 +445,8 @@ class Cell extends GUIElement {
         }
     }
 
-    /**
-     * Set cell size.
-     *
-     * @param width
-     * % value or 'auto' or px
-     */
     public setSize(
-        width: (string|number)
+        width: string|number // % value or 'auto' or px
     ): void {
         const cell = this,
             editMode = cell.row.layout.board.editMode;
@@ -563,7 +557,7 @@ class Cell extends GUIElement {
     }
 
     private convertWidthToValue(
-        width: (number|string)
+        width: number|string
     ): string {
         if (typeof width === 'number') {
             return width + 'px';
@@ -573,7 +567,6 @@ class Cell extends GUIElement {
         }
         return GUIElement.getPercentageWidth(width) || '';
     }
-
 }
 
 /* *
@@ -583,12 +576,11 @@ class Cell extends GUIElement {
  * */
 
 namespace Cell {
-
     /**
      * @internal
      **/
     export interface CellResponsiveOptions {
-        width: (string|number);
+        width: string|number;
         // visible: boolean;
     }
 
@@ -627,7 +619,7 @@ namespace Cell {
          * width: '33.333%'
          * ```
          **/
-        width?: (string|number);
+        width?: string|number;
         /**
          * Height of the cell.
          *
@@ -639,7 +631,7 @@ namespace Cell {
          * height: '300px'
          * ```
          **/
-        height?: (string|number);
+        height?: string|number;
         /**
          * CSS styles for cell container.
          **/
@@ -670,8 +662,6 @@ namespace Cell {
      * @internal
      **/
     export interface OptionsJSON extends JSON.Object {
-        width?: (string|number);
-        height?: (string|number);
         containerId: string;
         parentContainerId: string;
         mountedComponentJSON?: Component.JSON;
@@ -686,5 +676,4 @@ namespace Cell {
  *  Default Export
  *
  * */
-
 export default Cell;

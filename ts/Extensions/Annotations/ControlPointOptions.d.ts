@@ -8,7 +8,6 @@ import type Annotation from './Annotation';
 import type { AnnotationEventObject } from './EventEmitter';
 import type Controllable from './Controllables/Controllable';
 import type ControlPoint from './ControlPoint';
-import type ControlTarget from './ControlTarget';
 import type CSSObject from '../../Core/Renderer/CSSObject';
 import type PositionObject from '../../Core/Renderer/PositionObject';
 import type { SymbolKey } from '../../Core/Renderer/SVG/SymbolType';
@@ -30,7 +29,7 @@ export interface ControlPointDragEventFunction {
 export interface ControlPointPositionerFunction {
     (
         this: ControlPoint,
-        target: ControlTarget
+        target: Controllable
     ): PositionObject;
 }
 

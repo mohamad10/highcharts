@@ -23,6 +23,7 @@
  * */
 
 import type DataEvent from '../DataEvent';
+import type JSON from '../../Core/JSON';
 
 import DataConnector from './DataConnector.js';
 import DataTable from '../DataTable.js';
@@ -55,7 +56,7 @@ interface GoogleError {
  * */
 
 /**
- * Tests Google's response for error.
+ * Tests JSON object for Google Error.
  * @private
  */
 function isGoogleError(
@@ -106,19 +107,31 @@ class GoogleSheetsConnector extends DataConnector {
     /**
      * Constructs an instance of GoogleSheetsConnector
      *
-     * @param {GoogleSheetsConnector.UserOptions} [options]
+     * @param {DataTable} table
+     * Optional table to create the connector from.
+     *
+     * @param {CSVConnector.OptionsType} options
      * Options for the connector and converter.
+     *
+     * @param {DataConverter} converter
+     * Optional converter to replace the default converter.
      */
     public constructor(
-        options?: GoogleSheetsConnector.UserOptions
+        table: DataTable,
+        options: (
+            Partial<GoogleSheetsConnector.Options>&
+            {
+                googleAPIKey: string;
+                googleSpreadsheetKey: string;
+            }
+        ),
+        converter?: GoogleSheetsConverter
     ) {
-        const mergedOptions =
-            merge(GoogleSheetsConnector.defaultOptions, options);
-
-        super(mergedOptions);
-
-        this.converter = new GoogleSheetsConverter(mergedOptions);
-        this.options = mergedOptions;
+        super(table);
+        this.options = merge(GoogleSheetsConnector.defaultOptions, options);
+        this.converter = converter || new GoogleSheetsConverter({
+            firstRowAsNames: this.options.firstRowAsNames
+        });
     }
 
     /* *
@@ -250,10 +263,7 @@ namespace GoogleSheetsConnector {
         readonly url: string;
     }
 
-    /**
-     * Options of the GoogleSheetsConnector.
-     */
-    export interface Options extends DataConnector.Options {
+    export interface Options extends JSON.Object {
         dataRefreshRate: number;
         enablePolling: boolean;
         endColumn?: number;
@@ -266,13 +276,6 @@ namespace GoogleSheetsConnector {
         startRow?: number;
         worksheet?: number;
     }
-
-    /**
-     * Available options for constructor and converter of the
-     * GoogleSheetsConnector.
-     */
-    export type UserOptions =
-        (Partial<Options>&GoogleSheetsConverter.UserOptions);
 
     /* *
      *
@@ -295,7 +298,7 @@ namespace GoogleSheetsConnector {
     export function buildFetchURL(
         apiKey: string,
         sheetKey: string,
-        options: Partial<(FetchURLOptions&Options)> = {}
+        options: Partial<(FetchURLOptions|Options)> = {}
     ): string {
         return (
             `https://sheets.googleapis.com/v4/spreadsheets/${sheetKey}/values/` +
@@ -353,13 +356,13 @@ namespace GoogleSheetsConnector {
  *
  * */
 
-declare module './DataConnectorType' {
-    interface DataConnectorTypes {
-        GoogleSheets: typeof GoogleSheetsConnector;
+DataConnector.addConnector(GoogleSheetsConnector);
+
+declare module './ConnectorType' {
+    interface ConnectorTypeRegistry {
+        Google: typeof GoogleSheetsConnector;
     }
 }
-
-DataConnector.registerType('GoogleSheets', GoogleSheetsConnector);
 
 /* *
  *

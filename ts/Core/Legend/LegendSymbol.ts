@@ -51,9 +51,9 @@ declare module '../Series/PointLike' {
 declare module '../Series/SeriesLike' {
     interface SeriesLike extends LegendItem {
         drawLegendSymbol: (
-            legend: Legend,
-            item: (Point|Series)
-        ) => void;
+            typeof LegendSymbol.drawLineMarker|
+            typeof LegendSymbol.drawRectangle
+        );
     }
 }
 
@@ -64,6 +64,7 @@ declare module '../Series/SeriesLike' {
  * */
 
 namespace LegendSymbol {
+
     /* *
     *
     *  Functions
@@ -79,15 +80,14 @@ namespace LegendSymbol {
      * Highcharts.seriesTypes[type].prototype.drawLegendSymbol.
      *
      * @private
-     * @function Highcharts.LegendSymbolMixin.lineMarker
+     * @function Highcharts.LegendSymbolMixin.drawLineMarker
      *
      * @param {Highcharts.Legend} legend
      * The legend object.
      */
-    export function lineMarker(
+    export function drawLineMarker(
         this: Series,
-        legend: Legend,
-        item?: LegendItem
+        legend: Legend
     ): void {
 
         const legendItem = this.legendItem = this.legendItem || {},
@@ -181,7 +181,7 @@ namespace LegendSymbol {
      * Highcharts.seriesTypes[type].prototype.drawLegendSymbol.
      *
      * @private
-     * @function Highcharts.LegendSymbolMixin.rectangle
+     * @function Highcharts.LegendSymbolMixin.drawRectangle
      *
      * @param {Highcharts.Legend} legend
      * The legend object
@@ -189,10 +189,10 @@ namespace LegendSymbol {
      * @param {Highcharts.Point|Highcharts.Series} item
      * The series (this) or point
      */
-    export function rectangle(
+    export function drawRectangle(
         this: Series,
         legend: Legend,
-        item: LegendItem
+        item: (Point|Series)
     ): void {
         const legendItem = item.legendItem || {},
             options = legend.options,

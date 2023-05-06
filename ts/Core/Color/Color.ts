@@ -130,6 +130,11 @@ class Color implements ColorLike {
             return new GlobalColor(input);
         }
 
+        // Backwards compatibility, allow instanciation without new (#13053)
+        if (!(this instanceof Color)) {
+            return new Color(input);
+        }
+
         this.init(input);
     }
 

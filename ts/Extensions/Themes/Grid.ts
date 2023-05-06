@@ -121,6 +121,11 @@ namespace GridTheme {
                 color: 'gray'
             }
         },
+        labels: {
+            style: {
+                color: '#99b'
+            }
+        },
 
         navigation: {
             buttonOptions: {

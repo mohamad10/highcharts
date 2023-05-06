@@ -50,7 +50,7 @@ describe('Chart synchronized series state', () => {
 
     });
 
-    it.skip('should sync tooltip between two charts sharing the same connector', () => {
+    it('should sync tooltip between two charts sharing the same store', () => {
         cy.get('.chart-container')
             .get('.highcharts-point').first()
             .as('firstPoint')

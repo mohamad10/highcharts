@@ -45,6 +45,11 @@
             joinBy: 'hc-key',
             allAreas: false,
             name: 'Random data',
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            },
             dataLabels: {
                 enabled: true,
                 format: '{point.name}'

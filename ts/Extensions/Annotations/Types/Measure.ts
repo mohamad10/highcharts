@@ -43,7 +43,6 @@ const {
     merge,
     pick
 } = U;
-import { Palette } from '../../../Core/Color/Palettes.js';
 
 /* *
  *
@@ -422,7 +421,12 @@ class Measure extends Annotation {
         userOptions: Measure.MeasureOptions,
         index?: number
     ): void {
-        super.init(annotationOrChart, userOptions, index);
+        Annotation.prototype.init.call(
+            this,
+            annotationOrChart,
+            userOptions,
+            index
+        );
 
         this.offsetX = 0;
         this.offsetY = 0;
@@ -829,10 +833,8 @@ class Measure extends Annotation {
             item.translate(dx, dy)
         );
 
-        this.options.typeOptions.point = {
-            x: this.startXMin,
-            y: this.startYMin
-        };
+        this.options.typeOptions.point.x = this.startXMin;
+        this.options.typeOptions.point.y = this.startYMin;
     }
 
 }
@@ -993,8 +995,8 @@ Measure.prototype.defaultOptions = merge(
                  * @default {"color": "#666666", "fontSize": "11px"}
                  */
                 style: {
-                    fontSize: '0.7em',
-                    color: Palette.neutralColor60
+                    fontSize: '11px',
+                    color: '#666666'
                 },
                 /**
                  * Formatter function for the label text.

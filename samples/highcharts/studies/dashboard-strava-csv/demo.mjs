@@ -195,7 +195,7 @@ function dumpHTMLTable(datatable) {
 
 const csvData = document.querySelector('.hidden').innerText;
 
-const connector = new CSVConnector({
+const connector = new CSVConnector(undefined, {
     csv: csvData
 });
 
@@ -617,9 +617,12 @@ connector.on("afterLoad", function () {
         .filter(key => (key === 'Activity Type' ? false : typeof row[key] !== 'number'));
     this.table.deleteColumns(removeColumns);
 
-    // get activity types
-    state.activityTypes =
-        new Set(connector.table.modified.getColumn('Activity Type')).values();
+    // use group modifier to get activity types
+    const groupConnector = new DataConnector(connector.table.modified.clone());
+    groupConnector.table.setModifier(new GroupModifier({
+        groupColumn: 'Activity Type'
+    }));
+    state.activityTypes = groupConnector.table.modified.columns.value;
 
 
     if (!state.dashboard) {

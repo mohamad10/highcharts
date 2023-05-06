@@ -297,12 +297,7 @@ class SMAIndicator extends LineSeries {
         const linkedSeriesUnbiner = addEvent(
             Chart,
             'afterLinkSeries',
-            function ({ isUpdating }: AnyRecord): void {
-                // #18643 indicator shouldn't recalculate
-                // values while series updating.
-                if (isUpdating) {
-                    return;
-                }
+            function (): void {
                 const hasEvents = !!indicator.dataEventsToUnbind.length;
 
                 if (indicator.linkedParent) {
@@ -462,9 +457,8 @@ class SMAIndicator extends LineSeries {
 
                 indicator.updateData(croppedDataValues);
 
+            // Omit addPoint() and removePoint() cases
             } else if (
-                indicator.updateAllPoints || // #18710
-                // Omit addPoint() and removePoint() cases
                 processedData.xData.length !== oldDataLength - 1 &&
                 processedData.xData.length !== oldDataLength + 1
             ) {
@@ -530,7 +524,6 @@ interface SMAIndicator extends IndicatorLike {
     nameSuffixes: Array<string>;
     pointClass: typeof SMAPoint;
     useCommonDataGrouping: boolean;
-    updateAllPoints?: boolean;
 }
 extend(SMAIndicator.prototype, {
     calculateOn: {

@@ -48,6 +48,11 @@
             mapData: mapData,
             joinBy: ['iso-a3', 'code3'],
             name: 'Population density',
+            states: {
+                hover: {
+                    color: '#a4edba'
+                }
+            },
             tooltip: {
                 valueSuffix: '/km²'
             }

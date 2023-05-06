@@ -32,10 +32,4 @@ export interface MomentumParamsOptions extends SMAParamsOptions {
     // for inheritance
 }
 
-/* *
- *
- *  Default Export
- *
- * */
-
 export default MomentumOptions;

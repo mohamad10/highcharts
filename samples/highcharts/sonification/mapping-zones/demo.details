@@ -1,7 +1,0 @@
----
-name: Mapping zones
-authors:
-  - Øystein Moseng
-skipTest: true
-js_wrap: b
-...

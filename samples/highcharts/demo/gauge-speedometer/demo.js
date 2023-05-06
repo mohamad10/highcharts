@@ -37,7 +37,6 @@ Highcharts.chart('container', {
                 fontSize: '14px'
             }
         },
-        lineWidth: 0,
         plotBands: [{
             from: 0,
             to: 120,

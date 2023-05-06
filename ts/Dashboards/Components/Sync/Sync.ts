@@ -34,35 +34,21 @@ import SyncHandler from './Handler.js';
  * */
 
 namespace Sync {
+    export type EventType =
+        'visibility' |
+        'extremes' |
+        'highlight';
 
-    /* *
-     *
-     *  Declarations
-     *
-     * */
-
-    export type EventType = (
-        'visibility'
-        | 'extremes'
-        | 'highlight'
-    );
-
-    export type EmitterConfig = (
-        | [SyncEmitter['id'], SyncEmitter['func']]
-        | SyncEmitter['func']
-    );
-
-    export type HandlerConfig = (
-        [
-            SyncHandler['id'],
-            SyncHandler['presentationStateTrigger'],
-            SyncHandler['func']
-        ] |
+    export type EmitterConfig = [
+        SyncEmitter['id'],
+        SyncEmitter['func']
+    ] | SyncEmitter['func'];
+    export type HandlerConfig = [
+        SyncHandler['id'],
+        SyncHandler['presentationStateTrigger'],
         SyncHandler['func']
-    );
-
+    ] | SyncHandler['func'];
     export interface OptionsEntry {
-
         /**
          * Responsible for communicating to the component group that the action
          * has been triggered on the component.
@@ -71,7 +57,6 @@ namespace Sync {
          * will be disabled
          */
         emitter?: EmitterConfig | null | boolean;
-
         /**
          * Responsible for _handling_ incoming action from the synced component
          * group.
@@ -80,13 +65,11 @@ namespace Sync {
          * will be disabled
          */
         handler?: HandlerConfig | null | boolean;
-
     }
 
     export type OptionsRecord = (
-        Record<(SyncEmitter['id']|SyncHandler['id']), OptionsEntry>
+        Record<(SyncEmitter['id'] | SyncHandler['id']), OptionsEntry>
     );
-
 }
 /* *
  *

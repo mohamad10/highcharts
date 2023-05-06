@@ -63,6 +63,11 @@ Highcharts.mapChart('container', {
         dataLabels: {
             enabled: true,
             format: '{point.name}'
+        },
+        states: {
+            hover: {
+                color: '#a4edba'
+            }
         }
     }]
 });

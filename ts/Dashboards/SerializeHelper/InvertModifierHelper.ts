@@ -19,10 +19,9 @@
  *
  * */
 
-import type JSON from '../JSON';
+import type Serializable from '../Serializable.js';
 
 import InvertModifier from '../../Data/Modifiers/InvertModifier';
-import Serializable from '../Serializable.js';
 
 /* *
  *
@@ -75,7 +74,7 @@ function toJSON(
 ): InvertModifierHelper.JSON {
     return {
         $class: 'Data.InvertModifier',
-        options: obj.options as InvertModifierHelper.OptionsJSON
+        options: obj.options
     };
 }
 
@@ -94,16 +93,14 @@ namespace InvertModifierHelper {
      * */
 
     export interface JSON extends Serializable.JSON<'Data.InvertModifier'> {
-        options: OptionsJSON;
+        options: InvertModifier.Options;
     }
-
-    export type OptionsJSON = (JSON.Object&InvertModifier.Options);
 
 }
 
 /* *
  *
- *  Registry
+ *  Default Export
  *
  * */
 
@@ -113,13 +110,5 @@ const InvertModifierHelper: Serializable.Helper<InvertModifier, InvertModifierHe
     jsonSupportFor,
     toJSON
 };
-
-Serializable.registerHelper(InvertModifierHelper);
-
-/* *
- *
- *  Default Export
- *
- * */
 
 export default InvertModifierHelper;

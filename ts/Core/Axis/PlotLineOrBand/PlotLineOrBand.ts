@@ -324,7 +324,6 @@ class PlotLineOrBand {
 
             if (!axis.chart.styledMode) {
                 label.css(merge({
-                    fontSize: '0.8em',
                     textOverflow: 'ellipsis'
                 }, optionsLabel.style));
             }

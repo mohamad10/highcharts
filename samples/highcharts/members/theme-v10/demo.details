@@ -1,6 +1,0 @@
----
- name: Highcharts latest with v10 style
- authors:
-   - Torstein Hønsi
- js_wrap: b
-...

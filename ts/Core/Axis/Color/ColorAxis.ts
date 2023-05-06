@@ -188,7 +188,7 @@ class ColorAxis extends Axis implements AxisLike {
     public dataClasses: Array<ColorAxis.DataClassesOptions> = void 0 as any;
     public legendColor?: GradientColor;
     public legendItem?: LegendItemObject;
-    public name?: string;
+    public name: string = ''; // Prevents 'undefined' in legend in IE8
     public options: ColorAxis.Options = void 0 as any;
     public stops: GradientColor['stops'] = void 0 as any;
     public visible: boolean = true;
@@ -548,7 +548,6 @@ class ColorAxis extends Axis implements AxisLike {
             legendItem = item.legendItem || {},
             padding = legend.padding,
             legendOptions = legend.options,
-            labelOptions = axis.options.labels,
             itemDistance = pick(legendOptions.itemDistance, 10),
             horiz = axis.horiz,
             width = pick(
@@ -570,13 +569,11 @@ class ColorAxis extends Axis implements AxisLike {
 
         // Create the gradient
         if (!legendItem.symbol) {
-            legendItem.symbol = this.chart.renderer.symbol(
-                'roundedRect',
+            legendItem.symbol = this.chart.renderer.rect(
                 0,
                 (legend.baseline as any) - 11,
                 width,
-                height,
-                { r: legendOptions.symbolRadius ?? 3 }
+                height
             ).attr({
                 zIndex: 1
             }).add(legendItem.group);
@@ -589,8 +586,7 @@ class ColorAxis extends Axis implements AxisLike {
             (
                 horiz ?
                     itemDistance :
-                    pick(labelOptions.x, labelOptions.distance) +
-                        this.maxLabelLength
+                    this.options.labels.x + this.maxLabelLength
             )
         );
         legendItem.labelHeight = height + padding + (horiz ? labelPadding : 0);
@@ -937,7 +933,7 @@ class ColorAxis extends Axis implements AxisLike {
                         chart,
                         name,
                         options: {},
-                        drawLegendSymbol: LegendSymbol.rectangle,
+                        drawLegendSymbol: LegendSymbol.drawRectangle,
                         visible: true,
                         isDataClass: true,
 
@@ -997,7 +993,7 @@ namespace ColorAxis {
         chart: Chart;
         name: string;
         options: object;
-        drawLegendSymbol: typeof LegendSymbol['rectangle'];
+        drawLegendSymbol: typeof LegendSymbol['drawRectangle'];
         visible: boolean;
         setState: Point['setState'];
         isDataClass: true;

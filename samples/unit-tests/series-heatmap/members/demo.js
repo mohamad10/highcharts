@@ -108,7 +108,7 @@ QUnit.test(
             'Point padding should work with reversed yAxis, #18502.'
         );
 
-        assert.close(
+        assert.strictEqual(
             shapeArgsBefore.height - (2 * pointPaddingValue),
             chart.series[0].points[0].shapeArgs.height,
             1.1,
@@ -125,10 +125,9 @@ QUnit.test(
             'Point padding should work with reversed xAxis, #18502.'
         );
 
-        assert.close(
+        assert.strictEqual(
             shapeArgsBefore.height - (2 * pointPaddingValue),
             chart.series[0].points[0].shapeArgs.height,
-            1,
             'Point padding should work with reversed xAxis, #18502.'
         );
     }

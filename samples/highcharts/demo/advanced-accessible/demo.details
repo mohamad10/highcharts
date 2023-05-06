@@ -1,10 +1,10 @@
 ---
 name: Advanced accessible chart
 authors:
-  - Øystein Moseng
+  - Torstein Hønsi
 js_wrap: b
 tags:
   - Highcharts demo
 categories:
-  - Accessibility
+  - Accessible charts
 ...

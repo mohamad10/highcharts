@@ -1,24 +1,25 @@
 /**
  * Get the current time
  */
-const getNow = () => {
-    const now = new Date();
+function getNow() {
+    var now = new Date();
 
     return {
         hours: now.getHours() + now.getMinutes() / 60,
         minutes: now.getMinutes() * 12 / 60 + now.getSeconds() * 12 / 3600,
         seconds: now.getSeconds() * 12 / 60
     };
-};
+}
 
 /**
  * Pad numbers
  */
-const pad = (number, length) =>
+function pad(number, length) {
     // Create an array of the remaining length + 1 and join it with 0's
-    new Array((length || 2) + 1 - String(number).length).join(0) + number;
+    return new Array((length || 2) + 1 - String(number).length).join(0) + number;
+}
 
-let now = getNow();
+var now = getNow();
 
 // Create the chart
 Highcharts.chart('container', {
@@ -138,28 +139,25 @@ function (chart) {
         now = getNow();
 
         if (chart.axes) { // not destroyed
-            const hour = chart.get('hour'),
+            var hour = chart.get('hour'),
                 minute = chart.get('minute'),
-                second = chart.get('second');
+                second = chart.get('second'),
+                // run animation unless we're wrapping around from 59 to 0
+                animation = now.seconds === 0 ?
+                    false : {
+                        easing: 'easeOutBounce'
+                    };
 
             // Cache the tooltip text
             chart.tooltipText =
-                pad(Math.floor(now.hours), 2) + ':' +
-                pad(Math.floor(now.minutes * 5), 2) + ':' +
-                pad(now.seconds * 5, 2);
+                    pad(Math.floor(now.hours), 2) + ':' +
+                    pad(Math.floor(now.minutes * 5), 2) + ':' +
+                    pad(now.seconds * 5, 2);
 
 
-            hour.update(now.hours, true, false);
-            minute.update(now.minutes, true, false);
-
-            // Move to 59 sec without animation ...
-            if (now.seconds === 0) {
-                second.update(-0.2, true, false);
-            }
-            // ... then bounce to next second
-            second.update(now.seconds, true, {
-                easing: 'easeOutBounce'
-            });
+            hour.update(now.hours, true, animation);
+            minute.update(now.minutes, true, animation);
+            second.update(now.seconds, true, animation);
         }
 
     }, 1000);

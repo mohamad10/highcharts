@@ -36,8 +36,8 @@ const {
 /* eslint-disable require-jsdoc, valid-jsdoc */
 
 function arc(
-    cx: number,
-    cy: number,
+    x: number,
+    y: number,
     w: number,
     h: number,
     options?: SymbolOptions
@@ -68,57 +68,47 @@ function arc(
                 end - start - Math.PI < proximity ? 0 : 1
             );
 
-        let arcSegment: SVGPath.Arc = [
-            'A', // arcTo
-            rx, // x radius
-            ry, // y radius
-            0, // slanting
-            longArc, // long or short arc
-            pick(options.clockwise, 1), // clockwise
-            cx + rx * cosEnd,
-            cy + ry * sinEnd
-        ];
-        arcSegment.params = { start, end, cx, cy }; // Memo for border radius
         arc.push(
             [
                 'M',
-                cx + rx * cosStart,
-                cy + ry * sinStart
+                x + rx * cosStart,
+                y + ry * sinStart
             ],
-            arcSegment
+            [
+                'A', // arcTo
+                rx, // x radius
+                ry, // y radius
+                0, // slanting
+                longArc, // long or short arc
+                pick(options.clockwise, 1), // clockwise
+                x + rx * cosEnd,
+                y + ry * sinEnd
+            ]
         );
 
         if (defined(innerRadius)) {
-            arcSegment = [
-                'A', // arcTo
-                innerRadius, // x radius
-                innerRadius, // y radius
-                0, // slanting
-                longArc, // long or short arc
-                // Clockwise - opposite to the outer arc clockwise
-                defined(options.clockwise) ? 1 - options.clockwise : 0,
-                cx + innerRadius * cosStart,
-                cy + innerRadius * sinStart
-            ];
-            // Memo for border radius
-            arcSegment.params = {
-                start: end,
-                end: start,
-                cx,
-                cy
-            };
             arc.push(
                 open ?
                     [
                         'M',
-                        cx + innerRadius * cosEnd,
-                        cy + innerRadius * sinEnd
+                        x + innerRadius * cosEnd,
+                        y + innerRadius * sinEnd
                     ] : [
                         'L',
-                        cx + innerRadius * cosEnd,
-                        cy + innerRadius * sinEnd
+                        x + innerRadius * cosEnd,
+                        y + innerRadius * sinEnd
                     ],
-                arcSegment
+                [
+                    'A', // arcTo
+                    innerRadius, // x radius
+                    innerRadius, // y radius
+                    0, // slanting
+                    longArc, // long or short arc
+                    // Clockwise - opposite to the outer arc clockwise
+                    defined(options.clockwise) ? 1 - options.clockwise : 0,
+                    x + innerRadius * cosStart,
+                    y + innerRadius * sinStart
+                ]
             );
         }
         if (!open) {
@@ -130,7 +120,8 @@ function arc(
 }
 
 /**
- * Callout shape used for default tooltips.
+ * Callout shape used for default tooltips, also used for rounded
+ * rectangles in VML
  */
 function callout(
     x: number,
@@ -300,18 +291,17 @@ function roundedRect(
     h: number,
     options?: SymbolOptions
 ): SVGPath {
-    const r = options?.r || 0;
+    const r = (options && options.r) || 0;
     return [
         ['M', x + r, y],
         ['L', x + w - r, y], // top side
-        ['A', r, r, 0, 0, 1, x + w, y + r], // top-right corner
+        ['C', x + w, y, x + w, y, x + w, y + r], // top-right corner
         ['L', x + w, y + h - r], // right side
-        ['A', r, r, 0, 0, 1, x + w - r, y + h], // bottom-right corner
+        ['C', x + w, y + h, x + w, y + h, x + w - r, y + h], // bottom-rgt
         ['L', x + r, y + h], // bottom side
-        ['A', r, r, 0, 0, 1, x, y + h - r], // bottom-left corner
+        ['C', x, y + h, x, y + h, x, y + h - r], // bottom-left corner
         ['L', x, y + r], // left side
-        ['A', r, r, 0, 0, 1, x + r, y],
-        ['Z'] // top-left corner
+        ['C', x, y, x, y, x + r, y] // top-left corner
     ];
 }
 

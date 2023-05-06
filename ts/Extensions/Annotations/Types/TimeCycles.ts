@@ -107,25 +107,25 @@ class TimeCycles extends CrookedLine {
 
     public init(
         annotation: Annotation,
-        userOptions: TimeCyclesOptions,
+        options: TimeCyclesOptions,
         index?: number
     ): void {
-        if (defined(userOptions.yAxis)) {
-            (userOptions.points as MockPointOptions[]).forEach(
+        if (defined(options.yAxis)) {
+            (options.points as MockPointOptions[]).forEach(
                 (point): void => {
-                    point.yAxis = userOptions.yAxis;
+                    point.yAxis = options.yAxis;
                 }
             );
         }
 
-        if (defined(userOptions.xAxis)) {
-            (userOptions.points as MockPointOptions[]).forEach(
+        if (defined(options.xAxis)) {
+            (options.points as MockPointOptions[]).forEach(
                 (point): void => {
-                    point.xAxis = userOptions.xAxis;
+                    point.xAxis = options.xAxis;
                 }
             );
         }
-        super.init(annotation, userOptions, index);
+        super.init.call(this, annotation, options, index);
     }
 
     public setPath(): void {

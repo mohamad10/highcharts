@@ -1,6 +1,5 @@
 (function (H) {
-    const LineSeries = H.Series.types.line;
-    H.wrap(LineSeries.prototype, 'drawGraph', function (proceed) {
+    H.wrap(H.Series.prototype, 'drawGraph', function (proceed) {
 
         // Before the original function
         console.log('We are about to draw the graph:', typeof this.graph);

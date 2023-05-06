@@ -34,6 +34,7 @@ import type TickPositionsArray from './TickPositionsArray';
 import type Time from '../Time';
 
 import Axis from './Axis.js';
+import AxisDefaults from './AxisDefaults.js';
 import Chart from '../Chart/Chart.js';
 import H from '../Globals.js';
 const { dateFormats } = H;
@@ -372,9 +373,10 @@ function onAfterGetTitlePosition(
         const xOption = options.title.x;
         const yOption = options.title.y;
         const titleMargin = pick(options.title.margin, horiz ? 5 : 10);
-        const titleFontSize = axisTitle ? axis.chart.renderer.fontMetrics(
+        const titleFontSize = axis.chart.renderer.fontMetrics(
+            options.title.style.fontSize,
             axisTitle
-        ).f : 0;
+        ).f;
         const crispCorr = tickSize ? tickSize[0] / 2 : 0;
 
         // TODO account for alignment
@@ -774,7 +776,7 @@ function onAfterSetOptions(
             labels: {
                 padding: 2,
                 style: {
-                    fontSize: '0.9em'
+                    fontSize: '13px'
                 }
             },
 
@@ -961,6 +963,7 @@ function onAfterTickSize(
     this: Axis,
     e: { tickSize?: [number, number] }
 ): void {
+    const defaultLeftAxisOptions = AxisDefaults.defaultLeftAxisOptions;
     const {
         horiz,
         maxLabelDimensions,
@@ -969,7 +972,8 @@ function onAfterTickSize(
         }
     } = this;
     if (gridOptions.enabled && maxLabelDimensions) {
-        const labelPadding = this.options.labels.distance * 2;
+        const labelPadding =
+            (Math.abs((defaultLeftAxisOptions.labels as any).x) * 2);
         const distance = horiz ?
             (
                 gridOptions.cellHeight ||
@@ -1075,12 +1079,15 @@ function onTickAfterGetLabelPosition(
         tickWidth = tickSize ? tickSize[0] : 0,
         crispCorr = tickSize ? tickSize[1] / 2 : 0;
 
+    let labelHeight: number,
+        lblMetrics: FontMetricsObject,
+        lines: number,
+        bottom: number,
+        top: number,
+        left: number,
+        right: number;
     // Only center tick labels in grid axes
     if (gridOptions.enabled === true) {
-        let bottom: number,
-            top: number,
-            left: number,
-            right: number;
 
         // Calculate top and bottom positions of the cell.
         if (side === 'top') {
@@ -1136,29 +1143,30 @@ function onTickAfterGetLabelPosition(
                     top + ((bottom - top) / 2) // default to middle
         );
 
-        if (label) {
-            const lblMetrics = chart.renderer.fontMetrics(label),
-                labelHeight = label.getBBox().height;
+        lblMetrics = chart.renderer.fontMetrics(
+            labelOpts.style.fontSize,
+            label && label.element
+        );
+        labelHeight = label ? label.getBBox().height : 0;
 
-            // Adjustment to y position to align the label correctly.
-            // Would be better to have a setter or similar for this.
-            if (!labelOpts.useHTML) {
-                const lines = Math.round(labelHeight / lblMetrics.h);
-                e.pos.y += (
-                    // Center the label
-                    // TODO: why does this actually center the label?
-                    ((lblMetrics.b - (lblMetrics.h - lblMetrics.f)) / 2) +
-                    // Adjust for height of additional lines.
-                    -(((lines - 1) * lblMetrics.h) / 2)
-                );
-            } else {
-                e.pos.y += (
-                    // Readjust yCorr in htmlUpdateTransform
-                    lblMetrics.b +
-                    // Adjust for height of html label
-                    -(labelHeight / 2)
-                );
-            }
+        // Adjustment to y position to align the label correctly.
+        // Would be better to have a setter or similar for this.
+        if (!labelOpts.useHTML) {
+            lines = Math.round(labelHeight / lblMetrics.h);
+            e.pos.y += (
+                // Center the label
+                // TODO: why does this actually center the label?
+                ((lblMetrics.b - (lblMetrics.h - lblMetrics.f)) / 2) +
+                // Adjust for height of additional lines.
+                -(((lines - 1) * lblMetrics.h) / 2)
+            );
+        } else {
+            e.pos.y += (
+                // Readjust yCorr in htmlUpdateTransform
+                lblMetrics.b +
+                // Adjust for height of html label
+                -(labelHeight / 2)
+            );
         }
 
         e.pos.x += (axis.horiz && labelOpts.x) || 0;

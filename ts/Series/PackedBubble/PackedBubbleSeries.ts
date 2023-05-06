@@ -49,11 +49,6 @@ const {
         bubble: BubbleSeries
     }
 } = SeriesRegistry;
-import D from '../SimulationSeriesUtilities.js';
-const {
-    initDataLabels,
-    initDataLabelsDefer
-} = D;
 import U from '../../Core/Utilities.js';
 const {
     addEvent,
@@ -64,11 +59,8 @@ const {
     isArray,
     isNumber,
     merge,
-    pick,
-    syncTimeout
+    pick
 } = U;
-import A from '../../Core/Animation/AnimationUtilities.js';
-const { animObject } = A;
 
 /* *
  *
@@ -142,8 +134,6 @@ class PackedBubbleSeries extends BubbleSeries {
     public points: Array<PackedBubblePoint> = void 0 as any;
 
     public xData: Array<number> = void 0 as any;
-
-    public deferDataLabels: boolean = true;
 
     /* *
      *
@@ -495,12 +485,6 @@ class PackedBubbleSeries extends BubbleSeries {
      * @private
      */
     public drawDataLabels(): void {
-        // We defer drawing the dataLabels
-        // until dataLabels.animation.defer time passes
-        if (this.deferDataLabels) {
-            return;
-        }
-
         seriesProto.drawDataLabels.call(this, this.points);
 
         // Render parentNode labels:
@@ -676,7 +660,6 @@ class PackedBubbleSeries extends BubbleSeries {
 
     public init(): PackedBubbleSeries {
         seriesProto.init.apply(this, arguments);
-        initDataLabelsDefer.call(this);
 
         /* eslint-disable no-invalid-this */
 
@@ -1277,7 +1260,6 @@ extend(PackedBubbleSeries.prototype, {
     pointValKey: 'value',
     requireSorting: false,
     trackerGroups: ['group', 'dataLabelsGroup', 'parentNodesGroup'],
-    initDataLabels: initDataLabels,
     alignDataLabel: seriesProto.alignDataLabel,
     indexateNodes: noop as NetworkgraphSeries['indexateNodes'],
     onMouseDown: DragNodesComposition.onMouseDown,

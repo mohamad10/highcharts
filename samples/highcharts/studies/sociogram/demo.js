@@ -69,6 +69,11 @@
             }).add(marker);
         }
     });
+
+    H.wrap(H.Series.prototype, 'drawGraph', function (proceed) {
+        proceed.apply(this);
+
+    });
 }(Highcharts));
 
 

@@ -23,9 +23,11 @@
  * */
 
 import type DataEvent from '../DataEvent';
+import type JSON from '../../Core/JSON';
 
 import CSVConverter from '../Converters/CSVConverter.js';
 import DataConnector from './DataConnector.js';
+import DataTable from '../DataTable.js';
 import U from '../../Core/Utilities.js';
 const { merge } = U;
 
@@ -64,23 +66,31 @@ class CSVConnector extends DataConnector {
     /**
      * Constructs an instance of CSVConnector.
      *
-     * @param {CSVConnector.UserOptions} [options]
-     * Options for the connector and converter.
+     * @param {DataTable} table
+     * Optional table to create the connector from.
+     *
+     * @param {CSVConnector.OptionsType} options
+     * Options for the connector and parser.
+     *
+     * @param {DataConverter} converter
+     * Optional converter to replace the default converter.
      */
     public constructor(
-        options?: CSVConnector.UserOptions
+        table: DataTable = new DataTable(),
+        options: CSVConnector.OptionsType = {},
+        converter?: CSVConverter
     ) {
-        const mergedOptions = merge(CSVConnector.defaultOptions, options);
+        super(table);
 
-        super(mergedOptions);
+        this.options = merge(
+            CSVConnector.defaultOptions,
+            options
+        );
 
-        this.converter = new CSVConverter(mergedOptions);
-        this.options = mergedOptions;
+        this.converter = converter || new CSVConverter(options);
 
-        if (mergedOptions.enablePolling) {
-            this.startPolling(
-                Math.max(mergedOptions.dataRefreshRate || 0, 1) * 1000
-            );
+        if (options.enablePolling) {
+            this.startPolling(Math.max(options.dataRefreshRate || 0, 1) * 1000);
         }
     }
 
@@ -229,6 +239,12 @@ namespace CSVConnector {
     export type Event = (ErrorEvent|LoadEvent);
 
     /**
+     * Options for the CSVConnector class constructor.
+     */
+    export type OptionsType =
+        Partial<(CSVConnector.Options&CSVConverter.OptionsType)>;
+
+    /**
      * @todo move this to the dataparser?
      */
     export interface DataBeforeParseCallbackFunction {
@@ -250,19 +266,14 @@ namespace CSVConnector {
     }
 
     /**
-     * Options of the CSVConnector.
+     * Internal options for CSVConnector.
      */
-    export interface Options extends DataConnector.Options {
+    export interface Options extends JSON.Object {
         csv: string;
         csvURL: string;
         enablePolling: boolean;
         dataRefreshRate: number;
     }
-
-    /**
-     * Available options for constructor and converter of the CSVConnector.
-     */
-    export type UserOptions = (Partial<Options>&CSVConverter.UserOptions);
 
 }
 
@@ -272,13 +283,14 @@ namespace CSVConnector {
  *
  * */
 
-declare module './DataConnectorType' {
-    interface DataConnectorTypes {
-        CSV: typeof CSVConnector;
+DataConnector.addConnector(CSVConnector);
+
+declare module './ConnectorType' {
+    interface ConnectorTypeRegistry {
+        CSVConnector: typeof CSVConnector;
     }
 }
 
-DataConnector.registerType('CSV', CSVConnector);
 
 /* *
  *

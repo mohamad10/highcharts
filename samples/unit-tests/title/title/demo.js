@@ -18,8 +18,8 @@ QUnit.test(
 
         assert.strictEqual(
             chart.title.styles.fontSize,
-            '1em',
-            'Font size should be Stock specific default'
+            '16px',
+            'Font size is default 16px'
         );
 
         Highcharts.setOptions({
@@ -77,7 +77,7 @@ QUnit.test(
     }
 );
 
-QUnit.test('Title alignment', function (assert) {
+QUnit.test('useHTML and title alignment', function (assert) {
     var chart = Highcharts.chart('container', {
         chart: {
             width: 500,
@@ -107,31 +107,5 @@ QUnit.test('Title alignment', function (assert) {
     assert.ok(
         !/\</g.test(ariaValue),
         '"<" should not be included in aria-label#17753'
-    );
-
-    chart.update({
-        title: {
-            align: 'center',
-            useHTML: false
-        }
-    });
-
-    assert.strictEqual(
-        chart.title.element.querySelectorAll('tspan').length,
-        1,
-        'The text should contain one break'
-    );
-
-    chart.update({
-        chart: {
-            style: {
-                fontSize: '0.5rem'
-            }
-        }
-    });
-    assert.strictEqual(
-        chart.title.element.querySelectorAll('tspan').length,
-        0,
-        'The text should reflow and contain no breaks'
     );
 });

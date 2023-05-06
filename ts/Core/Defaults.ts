@@ -75,24 +75,27 @@ const defaultOptions: Options = {
      * are defined in CSS and applied either through series or point class
      * names, or through the [chart.colorCount](#chart.colorCount) option.
      *
+     *
+     * ### Legacy
+     *
+     * In Highcharts 3.x, the default colors were:
+     * ```js
+     * colors: ['#2f7ed8', '#0d233a', '#8bbc21', '#910000', '#1aadce',
+     *         '#492970', '#f28f43', '#77a1e5', '#c42525', '#a6c96a']
+     * ```
+     *
+     * In Highcharts 2.x, the default colors were:
+     * ```js
+     * colors: ['#4572A7', '#AA4643', '#89A54E', '#80699B', '#3D96AE',
+     *         '#DB843D', '#92A8CD', '#A47D7C', '#B5CA92']
+     * ```
+     *
      * @sample {highcharts} highcharts/chart/colors/
      *         Assign a global color theme
-     * @sample highcharts/members/theme-v10/
-     *         Latest release styled like version 10
      *
      * @type    {Array<(Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject)>}
-     * @default [
-     *     "#2caffe",
-     *     "#544fc5",
-     *     "#00e272",
-     *     "#fe6a35",
-     *     "#6b8abc",
-     *     "#d568fb",
-     *     "#2ee0ca",
-     *     "#fa4b42",
-     *     "#feb56a",
-     *     "#91e8e12
-     * ]
+     * @default ["#7cb5ec", "#434348", "#90ed7d", "#f7a35c", "#8085e9",
+     *          "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"]
      */
     colors: Palettes.colors,
 
@@ -379,7 +382,9 @@ const defaultOptions: Options = {
      * @product   highcharts highstock
      * @apioption global.timezoneOffset
      */
+
     global: {},
+
 
     /**
      * Time options that can apply globally or to individual charts. These
@@ -553,8 +558,8 @@ const defaultOptions: Options = {
          *         Styled mode
          *
          * @type      {Highcharts.CSSObject}
-         * @default   {highcharts|highmaps} { "color": "#333333", "fontSize": "1.125em" }
-         * @default   {highstock} { "color": "#333333", "fontSize": "1em" }
+         * @default   {highcharts|highmaps} { "color": "#333333", "fontSize": "18px" }
+         * @default   {highstock} { "color": "#333333", "fontSize": "16px" }
          * @apioption title.style
          */
 
@@ -922,6 +927,67 @@ const defaultOptions: Options = {
     plotOptions: {},
 
     /**
+     * HTML labels that can be positioned anywhere in the chart area.
+     *
+     * This option is deprecated since v7.1.2. Instead, use
+     * [annotations](#annotations) that support labels.
+     *
+     * @deprecated
+     * @product   highcharts highstock
+     */
+    labels: {
+
+        /**
+         * An HTML label that can be positioned anywhere in the chart area.
+         *
+         * @deprecated
+         * @type      {Array<*>}
+         * @apioption labels.items
+         */
+
+        /**
+         * Inner HTML or text for the label.
+         *
+         * @deprecated
+         * @type      {string}
+         * @apioption labels.items.html
+         */
+
+        /**
+         * CSS styles for each label. To position the label, use left and top
+         * like this:
+         * ```js
+         * style: {
+         *     left: '100px',
+         *     top: '100px'
+         * }
+         * ```
+         *
+         * @deprecated
+         * @type      {Highcharts.CSSObject}
+         * @apioption labels.items.style
+         */
+
+        /**
+         * Shared CSS styles for all labels.
+         *
+         * @deprecated
+         * @type    {Highcharts.CSSObject}
+         * @default {"color": "#333333", "position": "absolute"}
+         */
+        style: {
+            /**
+             * @ignore-option
+             */
+            position: 'absolute',
+            /**
+             * @ignore-option
+             */
+            color: Palette.neutralColor80
+        }
+    },
+
+    /**
      * The legend is a box containing a symbol and name for each series
      * item or point item in the chart. Each series (or points in case
      * of pie charts) is represented by a symbol and its name in the legend.
@@ -1089,9 +1155,11 @@ const defaultOptions: Options = {
          * @sample {highmaps} maps/legend/padding-itemmargin/
          *         Padding and item margins demonstrated
          *
+         * @type      {number}
+         * @default   0
          * @since     2.2.0
+         * @apioption legend.itemMarginBottom
          */
-        itemMarginBottom: 2,
 
         /**
          * The pixel top margin for each legend item.
@@ -1101,9 +1169,11 @@ const defaultOptions: Options = {
          * @sample {highmaps} maps/legend/padding-itemmargin/
          *         Padding and item margins demonstrated
          *
+         * @type      {number}
+         * @default   0
          * @since     2.2.0
+         * @apioption legend.itemMarginTop
          */
-        itemMarginTop: 2,
 
         /**
          * The width for each legend item. By default the items are laid out
@@ -1299,9 +1369,6 @@ const defaultOptions: Options = {
              * @since     2.2.4
              * @apioption legend.navigation.style
              */
-            style: {
-                fontSize: '0.8em'
-            },
 
             /**
              * The color for the active up or down arrow in the legend page
@@ -1410,7 +1477,7 @@ const defaultOptions: Options = {
          *         Item text styles
          *
          * @type    {Highcharts.CSSObject}
-         * @default {"color": "#333333", "cursor": "pointer", "fontSize": "0.75em", "fontWeight": "bold", "textOverflow": "ellipsis"}
+         * @default {"color": "#333333", "cursor": "pointer", "fontSize": "12px", "fontWeight": "bold", "textOverflow": "ellipsis"}
          */
         itemStyle: {
             /**
@@ -1424,11 +1491,11 @@ const defaultOptions: Options = {
             /**
              * @ignore
              */
-            fontSize: '0.8em',
+            fontSize: '12px',
             /**
              * @ignore
              */
-            textDecoration: 'none',
+            fontWeight: 'bold',
             /**
              * @ignore
              */
@@ -1477,11 +1544,7 @@ const defaultOptions: Options = {
             /**
              * @ignore
              */
-            color: Palette.neutralColor60,
-            /**
-             * @ignore
-             */
-            textDecoration: 'line-through'
+            color: Palette.neutralColor20
         },
 
         /**
@@ -1553,10 +1616,7 @@ const defaultOptions: Options = {
 
         /**
          * The border radius of the symbol for series types that use a rectangle
-         * in the legend. Defaults to half the `symbolHeight`, effectively
-         * creating a circle.
-         *
-         * For color axis scales, it defaults to 3.
+         * in the legend. Defaults to half the `symbolHeight`.
          *
          * @sample {highcharts} highcharts/legend/symbolradius/
          *         Round symbols
@@ -1728,14 +1788,10 @@ const defaultOptions: Options = {
              *      `.highcharts-legend-title` class.
              *
              * @type    {Highcharts.CSSObject}
-             * @default {"fontSize": "0.75em", "fontWeight": "bold"}
+             * @default {"fontWeight": "bold"}
              * @since   3.0
              */
             style: {
-                /**
-                 * @ignore
-                 */
-                fontSize: '0.8em',
                 /**
                  * @ignore
                  */
@@ -2239,7 +2295,7 @@ const defaultOptions: Options = {
          * The radius of the rounded border corners.
          *
          * @sample {highcharts} highcharts/tooltip/bordercolor-default/
-         *         Default border radius
+         *         5px by default
          * @sample {highcharts} highcharts/tooltip/borderradius-0/
          *         Square borders
          * @sample {highmaps} maps/tooltip/background-border/
@@ -2261,17 +2317,17 @@ const defaultOptions: Options = {
          */
         dateTimeLabelFormats: {
             /** @internal */
-            millisecond: '%A, %e %b, %H:%M:%S.%L',
+            millisecond: '%A, %b %e, %H:%M:%S.%L',
             /** @internal */
-            second: '%A, %e %b, %H:%M:%S',
+            second: '%A, %b %e, %H:%M:%S',
             /** @internal */
-            minute: '%A, %e %b, %H:%M',
+            minute: '%A, %b %e, %H:%M',
             /** @internal */
-            hour: '%A, %e %b, %H:%M',
+            hour: '%A, %b %e, %H:%M',
             /** @internal */
-            day: '%A, %e %b %Y',
+            day: '%A, %b %e, %Y',
             /** @internal */
-            week: 'Week from %A, %e %b %Y',
+            week: 'Week from %A, %b %e, %Y',
             /** @internal */
             month: '%B %Y',
             /** @internal */
@@ -2408,7 +2464,7 @@ const defaultOptions: Options = {
          * @type      {string}
          * @apioption tooltip.headerFormat
          */
-        headerFormat: '<span style="font-size: 0.8em">{point.key}</span><br/>',
+        headerFormat: '<span style="font-size: 10px">{point.key}</span><br/>',
 
         /**
          * The HTML of the null point's line in the tooltip. Works analogously
@@ -2469,17 +2525,18 @@ const defaultOptions: Options = {
          *
          * @type {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
          */
-        backgroundColor: Palette.backgroundColor,
+        backgroundColor: color(Palette.neutralColor3)
+            // @todo: Disallow undefined as input for colors
+            .setOpacity(0.85).get() as any,
 
         /**
-         * The pixel width of the tooltip border. Defaults to 0 for single
-         * tooltips and 1 for split tooltips.
+         * The pixel width of the tooltip border.
          *
          * In styled mode, the stroke width is set in the
          * `.highcharts-tooltip-box` class.
          *
          * @sample {highcharts} highcharts/tooltip/bordercolor-default/
-         *         2 pixels
+         *         2px by default
          * @sample {highcharts} highcharts/tooltip/borderwidth/
          *         No border (shadow only)
          * @sample {highcharts} highcharts/css/tooltip-border-background/
@@ -2493,7 +2550,7 @@ const defaultOptions: Options = {
          * @sample {highmaps} highcharts/css/tooltip-border-background/
          *         Tooltip in styled mode
          */
-        borderWidth: void 0,
+        borderWidth: 1,
 
         /**
          * Whether to apply a drop shadow to the tooltip.
@@ -2539,7 +2596,7 @@ const defaultOptions: Options = {
             /** @internal */
             cursor: 'default',
             /** @internal */
-            fontSize: '0.8em'
+            fontSize: '12px'
         },
 
         /**
@@ -2658,7 +2715,7 @@ const defaultOptions: Options = {
             /** @internal */
             color: Palette.neutralColor40,
             /** @internal */
-            fontSize: '0.6em'
+            fontSize: '9px'
         },
 
         /**
@@ -2688,7 +2745,10 @@ const defaultOptions: Options = {
 /*= } =*/
 '';
 
-const defaultTime = new Time(defaultOptions.time);
+const defaultTime = new Time(merge(
+    defaultOptions.global,
+    defaultOptions.time
+));
 
 /**
  * Get the updated default options. Until 3.0.7, merely exposing defaultOptions

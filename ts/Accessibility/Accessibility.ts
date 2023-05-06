@@ -147,7 +147,7 @@ class Accessibility {
         this.chart = chart as Accessibility.ChartComposition;
 
         // Abort on old browsers
-        if (!doc.addEventListener) {
+        if (!doc.addEventListener || !chart.renderer.isSVG) {
             this.zombie = true;
             this.components = {} as Accessibility.ComponentsObject;
             chart.renderTo.setAttribute('aria-hidden', true);

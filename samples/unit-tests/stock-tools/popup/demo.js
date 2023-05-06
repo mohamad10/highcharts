@@ -21,8 +21,7 @@ QUnit.test('Touch event test on popup', function (assert) {
             },
             yAxis: {
                 labels: {
-                    align: 'left',
-                    x: 10
+                    align: 'left'
                 }
             },
             annotations: [

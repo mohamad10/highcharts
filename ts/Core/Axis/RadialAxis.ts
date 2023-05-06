@@ -194,6 +194,7 @@ namespace RadialAxis {
         gridLineWidth: 1, // spokes
         labels: {
             align: void 0, // auto
+            distance: 15,
             x: 0,
             y: void 0, // auto
             style: {
@@ -213,7 +214,6 @@ namespace RadialAxis {
     const defaultRadialGaugeOptions: DeepPartial<Options> = {
         labels: {
             align: 'center',
-            distance: -25,
             x: 0,
             y: void 0 // auto
         },
@@ -1195,8 +1195,9 @@ namespace RadialAxis {
             // Vertically centered
             } else if (!defined(optionsY)) {
                 optionsY = (
-                    axis.chart.renderer.fontMetrics(label).b -
-                    labelBBox.height / 2
+                    axis.chart.renderer
+                        .fontMetrics(label.styles && label.styles.fontSize).b -
+                        labelBBox.height / 2
                 );
             }
 

@@ -52,6 +52,11 @@
                 name: 'Population density',
                 borderColor: '#555',
                 borderWidth: 0.5,
+                states: {
+                    hover: {
+                        color: '#a4edba'
+                    }
+                },
                 tooltip: {
                     valueSuffix: '/km²'
                 }

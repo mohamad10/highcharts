@@ -53,7 +53,6 @@ namespace SunburstNode {
         TU.SetTreeValuesOptions<SunburstSeries> {
         color: ColorType;
         mapOptionsToLevel: SunburstSeriesOptions['levels'];
-        borderRadius?: number|string;
         index: number;
         innerR: number;
         r: number;

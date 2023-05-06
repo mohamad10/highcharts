@@ -56,6 +56,11 @@ Highcharts.mapChart('container', {
         data: data,
         joinBy: 'ucName',
         name: 'Unemployment rate per 2015',
+        states: {
+            hover: {
+                color: '#a4edba'
+            }
+        },
         dataLabels: {
             enabled: true,
             formatter: function () {

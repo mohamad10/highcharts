@@ -53,16 +53,17 @@ import { Palette } from '../../Core/Color/Palettes.js';
 const ScrollbarDefaults: ScrollbarOptions = {
 
     /**
-     * The height of the scrollbar. If `buttonsEnabled` is true , the height
-     * also applies to the width of the scroll arrows so that they are always
-     * squares.
+     * The height of the scrollbar. The height also applies to the width
+     * of the scroll arrows so that they are always squares. Defaults to
+     * 20 for touch devices and 14 for mouse devices.
      *
-     * @sample stock/scrollbar/style/
-     *         Non-default height
+     * @sample stock/scrollbar/height/
+     *         A 30px scrollbar
      *
      * @type    {number}
+     * @default 20/14
      */
-    height: 10,
+    height: isTouchDevice ? 20 : 14,
 
     /**
      * The border rounding radius of the bar.
@@ -70,7 +71,7 @@ const ScrollbarDefaults: ScrollbarOptions = {
      * @sample stock/scrollbar/style/
      *         Scrollbar styling
      */
-    barBorderRadius: 5,
+    barBorderRadius: 0,
 
     /**
      * The corner radius of the scrollbar buttons.
@@ -79,13 +80,6 @@ const ScrollbarDefaults: ScrollbarOptions = {
      *         Scrollbar styling
      */
     buttonBorderRadius: 0,
-
-    /**
-     * Enable or disable the buttons at the end of the scrollbar.
-     *
-     * @since 11.0.0
-     */
-    buttonsEnabled: false,
 
     /**
      * Enable or disable the scrollbar.
@@ -162,7 +156,7 @@ const ScrollbarDefaults: ScrollbarOptions = {
      * @sample stock/scrollbar/style/
      *         Scrollbar styling
      */
-    barBorderWidth: 0,
+    barBorderWidth: 1,
 
     /**
      * The color of the scrollbar's border.
@@ -214,7 +208,7 @@ const ScrollbarDefaults: ScrollbarOptions = {
      *
      * @type {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
      */
-    rifleColor: 'none',
+    rifleColor: Palette.neutralColor80,
 
     /**
      * The color of the track background.
@@ -224,7 +218,7 @@ const ScrollbarDefaults: ScrollbarOptions = {
      *
      * @type {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
      */
-    trackBackgroundColor: 'none',
+    trackBackgroundColor: Palette.neutralColor5,
 
     /**
      * The color of the border of the scrollbar track.
@@ -234,15 +228,18 @@ const ScrollbarDefaults: ScrollbarOptions = {
      *
      * @type {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
      */
-    trackBorderColor: Palette.neutralColor20,
+    trackBorderColor: Palette.neutralColor5,
 
     /**
      * The corner radius of the border of the scrollbar track.
      *
      * @sample stock/scrollbar/style/
      *         Scrollbar styling
+     *
+     * @type      {number}
+     * @default   0
+     * @apioption scrollbar.trackBorderRadius
      */
-    trackBorderRadius: 5,
 
     /**
      * The width of the border of the scrollbar track.

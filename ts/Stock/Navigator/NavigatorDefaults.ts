@@ -228,7 +228,7 @@ const NavigatorDefaults: NavigatorOptions = {
      * @type    {Highcharts.ColorString|Highcharts.GradientColorObject|Highcharts.PatternObject}
      * @default #cccccc
      */
-    outlineColor: Palette.neutralColor40,
+    outlineColor: Palette.neutralColor20,
 
     /**
      * The width of the line marking the currently zoomed area in the
@@ -313,13 +313,6 @@ const NavigatorDefaults: NavigatorOptions = {
          * @ignore-option
          */
         compare: null as any,
-
-        /**
-         * @ignore-option
-         */
-        sonification: {
-            enabled: false
-        },
 
         /**
          * Unless data is explicitly defined, the data is borrowed from the
@@ -479,13 +472,7 @@ const NavigatorDefaults: NavigatorOptions = {
              */
             style: {
                 /** @ignore */
-                color: Palette.neutralColor100,
-                /** @ignore */
-                fontSize: '0.7em',
-                /** @ignore */
-                opacity: 0.6,
-                /** @ignore */
-                textOutline: '2px contrast'
+                color: Palette.neutralColor40
             },
 
             x: 3,

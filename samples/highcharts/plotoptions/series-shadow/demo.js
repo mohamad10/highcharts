@@ -20,7 +20,6 @@ Highcharts.chart('container', {
         shadow: {
             color: 'blue',
             width: 10,
-            opacity: 1,
             offsetX: 0,
             offsetY: 0
         }

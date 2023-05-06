@@ -773,7 +773,7 @@ namespace Exporting {
             innerMenu = createElement(
                 'ul',
                 { className: 'highcharts-menu' },
-                chart.styledMode ? {} : {
+                {
                     listStyle: 'none',
                     margin: 0,
                     padding: 0
@@ -1051,7 +1051,8 @@ namespace Exporting {
                 exportingOptions.filename.replace(/\//g, '-') :
                 this.getFilename(),
             type: exportingOptions.type,
-            width: exportingOptions.width,
+            // IE8 fails to post undefined correctly, so use 0
+            width: exportingOptions.width || 0,
             scale: exportingOptions.scale,
             svg: svg
         }, exportingOptions.formAttributes as any);
@@ -1713,7 +1714,7 @@ namespace Exporting {
 
     /**
      * Exporting module only. A collection of fixes on the produced SVG to
-     * account for expando properties, browser bugs.
+     * account for expando properties, browser bugs, VML problems and other.
      * Returns a cleaned SVG.
      *
      * @private
@@ -1775,6 +1776,11 @@ namespace Exporting {
             // Replace HTML entities, issue #347
             .replace(/&nbsp;/g, '\u00A0') // no-break space
             .replace(/&shy;/g, '\u00AD'); // soft hyphen
+
+        // Further sanitize for oldIE
+        if (this.ieSanitizeSVG) {
+            svg = this.ieSanitizeSVG(svg);
+        }
 
         return svg;
     }

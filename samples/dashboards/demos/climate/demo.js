@@ -125,29 +125,11 @@ async function setupDashboards() {
                             'y': dataScope
                         },
                         modifier: {
-                            type: 'Chain',
-                            chain: [{
-                                type: 'Range',
-                                ranges: [{
-                                    column: 'time',
-                                    minValue: minRange,
-                                    maxValue: maxRange
-                                }]
-                            }, {
-                                type: 'Math',
-                                columnFormulas: [{
-                                    column: 'TNC',
-                                    formula: '= E1 - 273.15'
-                                }, {
-                                    column: 'TNF',
-                                    formula: '= E1 * 1.8 - 459.67'
-                                }, {
-                                    column: 'TXC',
-                                    formula: '= F1 - 273.15'
-                                }, {
-                                    column: 'TXF',
-                                    formula: '= F1 * 1.8 - 459.67'
-                                }]
+                            type: 'Range',
+                            ranges: [{
+                                column: 'time',
+                                minValue: minRange,
+                                maxValue: maxRange
                             }]
                         }
                     }
@@ -169,7 +151,25 @@ async function setupDashboards() {
                 type: 'CSV',
                 options: {
                     csvURL: 'https://assets.highcharts.com/' +
-                        'dashboard-demodata/climate/cities/40.71_-74.01.csv'
+                        'dashboard-demodata/climate/cities/40.71_-74.01.csv',
+                    dataTable: {
+                        modifier: {
+                            type: 'Math',
+                            columnFormulas: [{
+                                column: 'TNC',
+                                formula: '= E1 - 273.15'
+                            }, {
+                                column: 'TNF',
+                                formula: '= E1 * 1.8 - 459.67'
+                            }, {
+                                column: 'TXC',
+                                formula: '= F1 - 273.15'
+                            }, {
+                                column: 'TXF',
+                                formula: '= F1 * 1.8 - 459.67'
+                            }]
+                        }
+                    }
                 }
             }]
         }
@@ -187,7 +187,7 @@ async function setupDashboards() {
     await setupWorldMap(board);
     await setupKPICity(board);
     await setupKPIData(board, 'TNC');
-    await setupKPIData(board, 'TNX');
+    await setupKPIData(board, 'TXC');
     await setupKPIData(board, 'RR1');
     await setupKPIData(board, 'ID');
     await setupKPIData(board, 'FD');
@@ -474,8 +474,17 @@ async function setupKPICity(board) {
 }
 
 async function setupKPIData(board, dataScope) {
+    // const activeCityTable = await board.dataPool
+    //     .getConnectorTable('Active City');
+    // const cityTable = await board.dataPool.getConnectorTable(cityScope);
+    // const minRangeTime = activeCityTable.getModifier().options.minValue;
+    const dataValue = 0; // cityTable.getCellAsNumber(
+    //     dataScope,
+    //     cityTable.getRowIndexBy('time', minRangeTime)
+    // ) || 0;
+
     board.setComponents([{
-        cell: `kpi-${dataScope}`,
+        cell: `kpi-${dataScope.substring(0, 2)}`,
         type: 'KPI',
         chartOptions: {
             chart: {
@@ -496,7 +505,7 @@ async function setupKPIData(board, dataScope) {
                 startAngle: -90
             },
             series: [{
-                data: [],
+                data: [dataValue],
                 dataLabels: {
                     format: '{y:.0f}',
                     y: -34
@@ -509,7 +518,7 @@ async function setupKPIData(board, dataScope) {
             }],
             title: {
                 margin: 0,
-                text: dataScopes[dataScope],
+                text: dataScopes[dataScope.substring(0, 2)],
                 verticalAlign: 'bottom',
                 widthAdjust: 0
             },

@@ -29,6 +29,15 @@ var Highcharts = require('highcharts/highstock');
 require('highcharts/modules/map')(Highcharts);
 ```
 
+OR(For use in laravel mix)
+
+```js
+window.Highcharts = require('highcharts/highcharts');
+// Load module after Highcharts is loaded
+require('highcharts/modules/exporting')(Highcharts);
+require('highcharts/modules/export-data')(Highcharts);
+require('highcharts/modules/accessibility')(Highcharts);
+```
 Alternatively when only map functionality is needed, and not stock.
 
 ```js
